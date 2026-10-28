@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Documentos Extraviados</title>
+</head>
+
+<body>
+
+    <header>
+
+        <h1>Sistema de Documentos Extraviados</h1>
+
+        <p>
+            Plataforma colaborativa para el reporte y búsqueda
+            de documentos extraviados.
+        </p>
+
+    </header>
+
+
+    <nav>
+
+        <a href="#inicio">Inicio</a>
+
+        <a href="#documentos">Documentos</a>
+
+        <a href="#buscar">Buscar</a>
+
+        <a href="#reportar">Reportar documento</a>
+
+        <a href="#reclamos">Reclamos</a>
+
+    </nav>
+
+
+    <main>
+
+        <section id="inicio">
+
+            <h2>Dashboard</h2>
+
+            <p>Resumen del sistema</p>
+
+            <div>
+
+                <h3>Documentos encontrados</h3>
+
+                <p>0</p>
+
+            </div>
+
+            <div>
+
+                <h3>Documentos reclamados</h3>
+
+                <p>0</p>
+
+            </div>
+
+            <div>
+
+                <h3>Reclamos pendientes</h3>
+
+                <p>0</p>
+
+            </div>
+
+            <div>
+
+                <h3>Zonas registradas</h3>
+
+                <p>0</p>
+
+            </div>
+
+        </section>
+
+
+        <section id="buscar">
+
+            <h2>Buscar documento</h2>
+
+            <form>
+
+                <label>Nombre:</label>
+                <input type="text">
+
+                <br><br>
+
+                <label>Número de documento:</label>
+                <input type="text">
+
+                <br><br>
+
+                <label>Zona:</label>
+
+                <select>
+
+                    <option>Seleccionar zona</option>
+
+                    <option>Centro</option>
+                    <option>Cala Cala</option>
+                    <option>Queru Queru</option>
+                    <option>Sarco</option>
+                    <option>Temporal</option>
+                    <option>Norte</option>
+                    <option>Sud</option>
+                    <option>Sacaba</option>
+                    <option>Quillacollo</option>
+                    <option>Colcapirhua</option>
+
+                </select>
+
+                <br><br>
+
+                <button type="submit">
+                    Buscar
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <section id="documentos">
+
+            <h2>Documentos encontrados</h2>
+
+            <table border="1">
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Nombre</th>
+                        <th>Número</th>
+                        <th>Zona</th>
+                        <th>Estado</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td>DOC001</td>
+                        <td>Carnet</td>
+                        <td>Ejemplo</td>
+                        <td>****1234</td>
+                        <td>Centro</td>
+                        <td>Encontrado</td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+
+        <section id="reportar">
+
+            <h2>Reportar documento encontrado</h2>
+
+            <form>
+
+                <label>Tipo de documento:</label>
+
+                <select>
+
+                    <option>Seleccionar</option>
+                    <option>Carnet de identidad</option>
+                    <option>Licencia de conducir</option>
+                    <option>Otro</option>
+
+                </select>
+
+                <br><br>
+
+                <label>Nombre visible:</label>
+
+                <input type="text">
+
+                <br><br>
+
+                <label>Número de documento:</label>
+
+                <input type="text">
+
+                <br><br>
+
+                <label>Zona:</label>
+
+                <select>
+
+                    <option>Seleccionar zona</option>
+                    <option>Centro</option>
+                    <option>Cala Cala</option>
+                    <option>Queru Queru</option>
+                    <option>Sarco</option>
+                    <option>Temporal</option>
+                    <option>Norte</option>
+                    <option>Sud</option>
+                    <option>Sacaba</option>
+                    <option>Quillacollo</option>
+                    <option>Colcapirhua</option>
+
+                </select>
+
+                <br><br>
+
+                <label>Lugar donde fue encontrado:</label>
+
+                <input type="text">
+
+                <br><br>
+
+                <label>Descripción:</label>
+
+                <textarea></textarea>
+
+                <br><br>
+
+                <label>Imagen:</label>
+
+                <input type="file">
+
+                <br><br>
+
+                <button type="submit">
+                    Registrar documento
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <section id="reclamos">
+
+            <h2>Reclamos</h2>
+
+            <form>
+
+                <label>ID del documento:</label>
+
+                <input type="text">
+
+                <br><br>
+
+                <label>Nombre del solicitante:</label>
+
+                <input type="text">
+
+                <br><br>
+
+                <label>Dato de verificación:</label>
+
+                <input type="text">
+
+                <br><br>
+
+                <button type="submit">
+                    Registrar reclamo
+                </button>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        <p>
+            Sistema web colaborativo de documentos extraviados
+        </p>
+
+        <p>
+            Cochabamba - Bolivia
+        </p>
+
+    </footer>
+
+</body>
+
+</html>
