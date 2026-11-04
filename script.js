@@ -4,15 +4,24 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwqdVaM53oENQCFxGgYeJ1m
 let documentos = [];
 let contador = 0;
 
-// CONSULTAR APPS SCRIPT
+
+// ==========================================
+// 1. CONECTAR CON GOOGLE APPS SCRIPT
+// ==========================================
+
 function consultarAPI(accion) {
+
     return new Promise((resolve, reject) => {
+
         const callback = "respuesta_" + (++contador);
         const script = document.createElement("script");
 
+        let terminado = false;
+
         const timeout = setTimeout(() => {
-            limpiar();
-            reject(new Error("Tiempo de espera agotado"));
+            finalizarError(
+                new Error("Tiempo de espera agotado")
+            );
         }, 15000);
 
         function limpiar() {
@@ -21,31 +30,59 @@ function consultarAPI(accion) {
             delete window[callback];
         }
 
+        function finalizarError(error) {
+            if (terminado) return;
+
+            terminado = true;
+            limpiar();
+            reject(error);
+        }
+
         window[callback] = function(respuesta) {
+
+            if (terminado) return;
+
+            terminado = true;
             limpiar();
 
-            if (respuesta.estado === "ok") {
+            if (respuesta && respuesta.estado === "ok") {
                 resolve(respuesta.datos);
             } else {
-                reject(new Error(respuesta.mensaje));
+                reject(new Error(
+                    respuesta?.mensaje || "Respuesta incorrecta"
+                ));
             }
         };
 
         script.onerror = function() {
-            limpiar();
-            reject(new Error("Error de conexión"));
+
+            console.error(
+                "Error al cargar Apps Script:",
+                script.src
+            );
+
+            finalizarError(new Error(
+                "No se pudo conectar con Apps Script. " +
+                "Revisa la URL, permisos y versión publicada."
+            ));
         };
 
         script.src = API_URL
             + "?accion=" + encodeURIComponent(accion)
-            + "&callback=" + callback;
+            + "&callback=" + encodeURIComponent(callback);
 
         document.body.appendChild(script);
+
     });
 }
 
-// CARGAR DASHBOARD
+
+// ==========================================
+// 2. CARGAR DASHBOARD
+// ==========================================
+
 async function cargarDashboard() {
+
     const datos = await consultarAPI("dashboard");
 
     document.getElementById("totalDocumentos").textContent =
@@ -59,39 +96,82 @@ async function cargarDashboard() {
 
     document.getElementById("totalZonas").textContent =
         datos.zonasRegistradas;
+
+    console.log("Dashboard cargado correctamente");
+
 }
 
-// CARGAR ZONAS
+
+// ==========================================
+// 3. CARGAR ZONAS DESDE GOOGLE SHEETS
+// ==========================================
+
 async function cargarZonas() {
+
     const zonas = await consultarAPI("zonas");
 
     const buscar = document.getElementById("buscarZona");
     const reportar = document.getElementById("zonaReporte");
 
+    if (!buscar || !reportar) {
+        throw new Error(
+            "No se encontraron los selectores de zonas en HTML"
+        );
+    }
+
+    buscar.innerHTML =
+        '<option value="">Todas las zonas</option>';
+
+    reportar.innerHTML =
+        '<option value="">Seleccionar zona</option>';
+
     zonas.forEach(zona => {
+
+        if (!zona.Zona) return;
+
         [buscar, reportar].forEach(select => {
+
             const opcion = document.createElement("option");
 
             opcion.value = zona.Zona;
             opcion.textContent = zona.Zona;
 
             select.appendChild(opcion);
+
         });
+
     });
+
+    console.log("Zonas cargadas:", zonas.length);
+
 }
 
-// MOSTRAR DOCUMENTOS
+
+// ==========================================
+// 4. MOSTRAR DOCUMENTOS EN LA TABLA
+// ==========================================
+
 function mostrarDocumentos(lista) {
+
     const tabla = document.getElementById("tablaDocumentos");
     const mensaje = document.getElementById("mensajeDocumentos");
 
+    if (!tabla || !mensaje) return;
+
     tabla.innerHTML = "";
 
-    mensaje.textContent = lista.length === 0
-        ? "No se encontraron documentos."
-        : "";
+    if (lista.length === 0) {
+
+        mensaje.textContent =
+            "No se encontraron documentos.";
+
+        return;
+    }
+
+    mensaje.textContent = "";
 
     lista.forEach(documento => {
+
         const fila = document.createElement("tr");
 
         const campos = [
@@ -104,26 +184,48 @@ function mostrarDocumentos(lista) {
         ];
 
         campos.forEach(campo => {
+
             const celda = document.createElement("td");
 
             celda.textContent = documento[campo] || "";
 
             fila.appendChild(celda);
+
         });
 
         tabla.appendChild(fila);
+
     });
+
 }
 
-// CARGAR DOCUMENTOS
+
+// ==========================================
+// 5. CARGAR DOCUMENTOS DE GOOGLE SHEETS
+// ==========================================
+
 async function cargarDocumentos() {
-    documentos = await consultarAPI("documentos");
+
+    const datos = await consultarAPI("documentos");
+
+    documentos = datos;
 
     mostrarDocumentos(documentos);
+
+    console.log(
+        "Documentos cargados:",
+        documentos.length
+    );
+
 }
 
-// BUSCAR DOCUMENTOS
+
+// ==========================================
+// 6. BUSCAR DOCUMENTOS
+// ==========================================
+
 function buscarDocumentos(evento) {
+
     evento.preventDefault();
 
     const nombre = document.getElementById("buscarNombre")
@@ -132,12 +234,15 @@ function buscarDocumentos(evento) {
     const numero = document.getElementById("buscarNumero")
         .value.trim();
 
-    const zona = document.getElementById("buscarZona").value;
+    const zona = document.getElementById("buscarZona")
+        .value;
 
     const resultados = documentos.filter(documento => {
+
         const coincideNombre =
             String(documento.NombreVisible || "")
-                .toLowerCase().includes(nombre);
+                .toLowerCase()
+                .includes(nombre);
 
         const coincideNumero =
             String(documento.NumeroDocumento || "")
@@ -146,19 +251,37 @@ function buscarDocumentos(evento) {
         const coincideZona =
             zona === "" || documento.Zona === zona;
 
-        return coincideNombre && coincideNumero && coincideZona;
+        return coincideNombre &&
+               coincideNumero &&
+               coincideZona;
+
     });
 
     mostrarDocumentos(resultados);
+
+    console.log(
+        "Resultados encontrados:",
+        resultados.length
+    );
+
 }
 
-// REGISTRAR DOCUMENTO DE PRUEBA
+
+// ==========================================
+// 7. REGISTRAR DOCUMENTO DE PRUEBA
+// ==========================================
+
 async function registrarDocumento(evento) {
+
     evento.preventDefault();
 
     const formulario = evento.target;
-    const mensaje = document.getElementById("mensajeRegistro");
-    const boton = formulario.querySelector("button[type=submit]");
+
+    const mensaje =
+        document.getElementById("mensajeRegistro");
+
+    const boton =
+        formulario.querySelector('button[type="submit"]');
 
     const datos = Object.fromEntries(
         new FormData(formulario).entries()
@@ -166,56 +289,178 @@ async function registrarDocumento(evento) {
 
     datos.accion = "agregarDocumento";
 
+    if (!datos.Zona) {
+
+        mensaje.textContent =
+            "Debes seleccionar una zona.";
+
+        return;
+    }
+
     boton.disabled = true;
-    mensaje.textContent = "Enviando solicitud...";
+
+    mensaje.textContent =
+        "Enviando documento...";
 
     try {
+
         await fetch(API_URL, {
+
             method: "POST",
+
             mode: "no-cors",
+
             headers: {
                 "Content-Type": "text/plain"
             },
+
             body: JSON.stringify(datos)
+
         });
 
         mensaje.textContent =
-            "Solicitud enviada. Revisa Google Sheets para confirmar.";
+            "Solicitud enviada. Revisa Google Sheets " +
+            "para confirmar que se guardó.";
+
+        console.log(
+            "Solicitud de registro enviada"
+        );
 
         formulario.reset();
 
     } catch (error) {
+
+        console.error(
+            "Error al enviar documento:",
+            error
+        );
+
         mensaje.textContent =
             "Error al enviar: " + error.message;
 
     } finally {
+
         boton.disabled = false;
+
     }
+
 }
 
-// INICIAR LA PAGINA
+
+// ==========================================
+// 8. INICIAR SISTEMA
+// ==========================================
+
 async function iniciar() {
-    document.getElementById("formBuscar")
-        .addEventListener("submit", buscarDocumentos);
 
-    document.getElementById("formReportar")
-        .addEventListener("submit", registrarDocumento);
+    console.log("Iniciando DocuCochabamba...");
 
-    try {
-        await Promise.all([
-            cargarDashboard(),
-            cargarZonas(),
-            cargarDocumentos()
-        ]);
+    const formBuscar =
+        document.getElementById("formBuscar");
 
-        console.log("Conexión con Google Sheets correcta");
+    const formReportar =
+        document.getElementById("formReportar");
 
-    } catch (error) {
-        console.error(error);
+    if (formBuscar) {
 
-        document.getElementById("mensajeDocumentos")
-            .textContent = "Error: " + error.message;
+        formBuscar.addEventListener(
+            "submit",
+            buscarDocumentos
+        );
+
     }
+
+    if (formReportar) {
+
+        formReportar.addEventListener(
+            "submit",
+            registrarDocumento
+        );
+
+    }
+
+    // Consultar cada sección de forma independiente
+
+    const resultados = await Promise.allSettled([
+
+        cargarDashboard(),
+
+        cargarZonas(),
+
+        cargarDocumentos()
+
+    ]);
+
+    const nombres = [
+        "Dashboard",
+        "Zonas",
+        "Documentos"
+    ];
+
+    resultados.forEach((resultado, indice) => {
+
+        if (resultado.status === "fulfilled") {
+
+            console.log(
+                nombres[indice] + " cargado correctamente"
+            );
+
+        } else {
+
+            console.error(
+                "Error en " + nombres[indice] + ":",
+                resultado.reason
+            );
+
+        }
+
+    });
+
+    // Mostrar error de documentos
+
+    if (resultados[2].status === "rejected") {
+
+        const mensaje =
+            document.getElementById("mensajeDocumentos");
+
+        if (mensaje) {
+
+            mensaje.textContent =
+                "Error: " +
+                resultados[2].reason.message;
+
+        }
+
+    }
+
+    // Mostrar error de zonas
+
+    if (resultados[1].status === "rejected") {
+
+        const zonaReporte =
+            document.getElementById("zonaReporte");
+
+        if (zonaReporte) {
+
+            zonaReporte.innerHTML =
+                '<option value="">Error al cargar zonas</option>';
+
+        }
+
+        console.error(
+            "No se pudieron cargar las zonas."
+        );
+
+    }
+
 }
 
-document.addEventListener("DOMContentLoaded", iniciar);
+
+// ==========================================
+// 9. EJECUTAR CUANDO CARGUE EL HTML
+// ==========================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    iniciar
+);
