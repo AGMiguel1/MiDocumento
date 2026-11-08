@@ -1,0 +1,258 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f2f5f8;
+    color: #243447;
+    line-height: 1.5;
+}
+
+header {
+    padding: 25px 15px;
+    background-color: #234e70;
+    color: white;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0 0 10px;
+}
+
+header p {
+    max-width: 650px;
+    margin: auto;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background-color: white;
+    border-bottom: 1px solid #d5dee7;
+}
+
+a {
+    color: #174f86;
+}
+
+nav a {
+    padding: 8px 12px;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+nav a:hover {
+    background-color: #e8f0f8;
+}
+
+main,
+body > section,
+#estadoCarga {
+    width: min(100% - 32px, 950px);
+    margin: 20px auto;
+}
+
+section {
+    margin-bottom: 20px;
+    padding: 22px;
+    background-color: white;
+    border: 1px solid #d5dee7;
+    border-radius: 6px;
+}
+
+h2 {
+    margin-top: 0;
+    color: #234e70;
+}
+
+#inicio > div {
+    margin: 10px 0;
+    padding: 12px 16px;
+    background-color: #edf3f9;
+    border-left: 4px solid #2a6496;
+    border-radius: 4px;
+}
+
+#inicio h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+#inicio > div p {
+    margin: 5px 0 0;
+    font-size: 26px;
+    font-weight: bold;
+    color: #234e70;
+}
+
+form {
+    max-width: 600px;
+}
+
+label {
+    display: block;
+    margin: 12px 0 5px;
+    font-weight: bold;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #7f91a3;
+    border-radius: 4px;
+    background-color: white;
+    color: #243447;
+    font: inherit;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+input[readonly] {
+    background-color: #eef1f4;
+}
+
+button {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 4px;
+    background-color: #235d8b;
+    color: white;
+    font: inherit;
+    cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+    background-color: #19486e;
+}
+
+button:disabled {
+    background-color: #e2e7ec;
+    color: #536170;
+    cursor: not-allowed;
+}
+
+fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid #d5dee7;
+    border-radius: 4px;
+}
+
+legend {
+    padding: 0 6px;
+    font-weight: bold;
+}
+
+fieldset:disabled input,
+fieldset:disabled select,
+fieldset:disabled textarea {
+    background-color: #eef1f4;
+    color: #536170;
+    cursor: not-allowed;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #b66300;
+    outline-offset: 3px;
+}
+
+form br {
+    display: none;
+}
+
+#documentos {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    margin-top: 16px;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 10px;
+    border: 1px solid #cbd6e0;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+th {
+    background-color: #234e70;
+    color: white;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f2f6fa;
+}
+
+.avisoSesion {
+    padding: 10px;
+    border-left: 4px solid #b66300;
+    background-color: #fff4dc;
+    color: #654100;
+}
+
+#ayudaClave,
+#ayudaVerificacion {
+    color: #526170;
+    font-size: 14px;
+}
+
+[role="status"]:not(:empty) {
+    padding: 10px;
+    border: 1px solid #bdcddd;
+    border-radius: 4px;
+    background-color: #edf3f9;
+    overflow-wrap: anywhere;
+}
+
+footer {
+    padding: 20px 16px;
+    background-color: #234e70;
+    color: white;
+    text-align: center;
+}
+
+footer p {
+    margin: 5px 0;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 26px;
+    }
+
+    section {
+        padding: 16px;
+    }
+
+    nav a {
+        padding: 8px;
+    }
+
+    table {
+        min-width: 580px;
+    }
+}
