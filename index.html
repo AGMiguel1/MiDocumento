@@ -27,167 +27,135 @@
         <a href="#reclamos">Reclamos</a>
     </nav>
 
-    <!-- INICIAR SESIÓN -->
-<section id="iniciarSesion">
-    <h2>Iniciar sesión</h2>
-
-    <form id="formIniciarSesion">
-        <label for="correoLogin">Correo electrónico:</label>
-        <input
-            type="email"
-            id="correoLogin"
-            name="correo"
-            autocomplete="username"
-            maxlength="254"
-            required
-        >
-
-        <br><br>
-
-        <label for="claveLogin">Contraseña:</label>
-        <input
-            type="password"
-            id="claveLogin"
-            name="clave"
-            autocomplete="current-password"
-            required
-        >
-
-        <br><br>
-
-        <button type="submit">Iniciar sesión</button>
-
-        <p>
-            ¿No tienes cuenta?
-            <a href="#crearUsuario">Crear una cuenta</a>
-        </p>
-    </form>
-
-    <p id="mensajeLogin" role="status" aria-live="polite"></p>
-</section>
-
-    <!-- CREAR USUARIO -->
-    <section id="crearUsuario">
-        <h2>Crear una cuenta</h2>
-    
-        <form id="formCrearUsuario">
-            <label for="nombreUsuario">Nombre completo:</label>
-            <input
-                type="text"
-                id="nombreUsuario"
-                name="Nombre"
-                autocomplete="name"
-                maxlength="120"
-                required
-            >
-    
-            <br><br>
-    
-            <label for="correoUsuario">Correo electrónico:</label>
-            <input
-                type="email"
-                id="correoUsuario"
-                name="Correo"
-                autocomplete="email"
-                maxlength="254"
-                required
-            >
-    
-            <br><br>
-    
-            <label for="telefonoUsuario">Teléfono:</label>
-            <input
-                type="tel"
-                id="telefonoUsuario"
-                name="Telefono"
-                autocomplete="tel"
-                maxlength="25"
-                required
-            >
-    
-            <br><br>
-    
-            <label for="claveUsuario">Contraseña:</label>
-            <input
-                type="password"
-                id="claveUsuario"
-                name="clave"
-                autocomplete="new-password"
-                minlength="12"
-                aria-describedby="ayudaClave"
-                required
-            >
-            <p id="ayudaClave">Utiliza al menos 12 caracteres.</p>
-    
-            <label for="confirmarClave">Confirmar contraseña:</label>
-            <input
-                type="password"
-                id="confirmarClave"
-                name="confirmacion"
-                autocomplete="new-password"
-                minlength="12"
-                required
-            >
-    
-            <br><br>
-    
-            <button type="submit">Crear cuenta</button>
-    
-            <p>
-                ¿Ya tienes cuenta?
-                <a href="#iniciarSesion">Iniciar sesión</a>
-            </p>
-        </form>
-    
-        <p id="mensajeUsuario" role="status" aria-live="polite"></p>
-    </section>
-    
-    <script>
-        // Interfaz preparada para conectar la autenticación.
-        // Evita enviar contraseñas hasta configurar ese servicio.
-    
-        document.getElementById("formIniciarSesion")
-            .addEventListener("submit", function (evento) {
-                evento.preventDefault();
-    
-                document.getElementById("mensajeLogin").textContent =
-                    "El inicio de sesión aún requiere conectar " +
-                    "el servicio de autenticación.";
-            });
-    
-        const claveNueva = document.getElementById("claveUsuario");
-        const confirmacion = document.getElementById("confirmarClave");
-    
-        function validarConfirmacion() {
-            confirmacion.setCustomValidity(
-                claveNueva.value === confirmacion.value
-                    ? ""
-                    : "Las contraseñas no coinciden."
-            );
-        }
-    
-        claveNueva.addEventListener("input", validarConfirmacion);
-        confirmacion.addEventListener("input", validarConfirmacion);
-    
-        document.getElementById("formCrearUsuario")
-            .addEventListener("submit", function (evento) {
-                evento.preventDefault();
-    
-                validarConfirmacion();
-    
-                if (!this.reportValidity()) {
-                    return;
-                }
-    
-                document.getElementById("mensajeUsuario").textContent =
-                    "El registro aún requiere conectar " +
-                    "el servicio de autenticación. No se creó ninguna cuenta.";
-            });
-    </script>
-
     <main>
 
-        <!-- DASHBOARD -->
+        <section id="sesionActual" hidden>
+            <h2>Mi sesión</h2>
+            <p id="nombreSesion"></p>
+            <p id="estadoSesion" role="status" aria-live="polite"></p>
+            <button type="button" id="cerrarSesion">
+                Cerrar sesión
+            </button>
+        </section>
+
+        <p id="estadoCarga" role="status" aria-live="polite"></p>
+
+        <section id="iniciarSesion">
+            <h2>Iniciar sesión</h2>
+
+            <form id="formIniciarSesion">
+                <label for="correoLogin">Correo electrónico:</label>
+                <input
+                    type="email"
+                    id="correoLogin"
+                    name="Correo"
+                    autocomplete="username"
+                    maxlength="254"
+                    required
+                >
+
+                <br><br>
+
+                <label for="claveLogin">Contraseña:</label>
+                <input
+                    type="password"
+                    id="claveLogin"
+                    name="Clave"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <br><br>
+
+                <button type="submit">Iniciar sesión</button>
+
+                <p>
+                    ¿No tienes cuenta?
+                    <a href="#crearUsuario">Crear una cuenta</a>
+                </p>
+            </form>
+
+            <p id="mensajeLogin" role="status" aria-live="polite"></p>
+        </section>
+
+        <section id="crearUsuario">
+            <h2>Crear una cuenta</h2>
+
+            <form id="formCrearUsuario">
+                <label for="nombreUsuario">Nombre completo:</label>
+                <input
+                    type="text"
+                    id="nombreUsuario"
+                    name="Nombre"
+                    autocomplete="name"
+                    maxlength="120"
+                    required
+                >
+
+                <br><br>
+
+                <label for="correoUsuario">Correo electrónico:</label>
+                <input
+                    type="email"
+                    id="correoUsuario"
+                    name="Correo"
+                    autocomplete="email"
+                    maxlength="254"
+                    required
+                >
+
+                <br><br>
+
+                <label for="telefonoUsuario">Teléfono:</label>
+                <input
+                    type="tel"
+                    id="telefonoUsuario"
+                    name="Telefono"
+                    autocomplete="tel"
+                    maxlength="25"
+                    required
+                >
+
+                <br><br>
+
+                <label for="claveUsuario">Contraseña:</label>
+                <input
+                    type="password"
+                    id="claveUsuario"
+                    name="Clave"
+                    autocomplete="new-password"
+                    minlength="12"
+                    aria-describedby="ayudaClave"
+                    required
+                >
+
+                <p id="ayudaClave">
+                    Utiliza al menos 12 caracteres.
+                </p>
+
+                <label for="confirmarClave">Confirmar contraseña:</label>
+                <input
+                    type="password"
+                    id="confirmarClave"
+                    name="confirmacion"
+                    autocomplete="new-password"
+                    minlength="12"
+                    required
+                >
+
+                <br><br>
+
+                <button type="submit">Crear cuenta</button>
+
+                <p>
+                    ¿Ya tienes cuenta?
+                    <a href="#iniciarSesion">Iniciar sesión</a>
+                </p>
+            </form>
+
+            <p id="mensajeUsuario" role="status" aria-live="polite"></p>
+        </section>
+
         <section id="inicio">
             <h2>Dashboard</h2>
             <p>Resumen del sistema</p>
@@ -213,7 +181,6 @@
             </div>
         </section>
 
-        <!-- BUSCAR DOCUMENTOS -->
         <section id="buscar">
             <h2>Buscar documento</h2>
 
@@ -241,7 +208,6 @@
             </form>
         </section>
 
-        <!-- LISTA DE DOCUMENTOS -->
         <section id="documentos">
             <h2>Documentos encontrados</h2>
 
@@ -256,98 +222,117 @@
                         <th>Estado</th>
                     </tr>
                 </thead>
+
                 <tbody id="tablaDocumentos"></tbody>
             </table>
 
             <p id="mensajeDocumentos"></p>
         </section>
 
-        <!-- REPORTAR DOCUMENTO -->
         <section id="reportar">
             <h2>Reportar documento encontrado</h2>
-            <p>Formulario de registro de documentos.</p>
+
+            <p class="avisoSesion">
+                Inicia sesión para registrar documentos.
+            </p>
 
             <form id="formReportar">
-                <label for="tipoDocumento">
-                    Tipo de documento:
-                </label>
+                <fieldset id="camposReporte" disabled>
+                    <legend>Datos del documento</legend>
 
-                <select id="tipoDocumento"
+                    <label for="tipoDocumento">
+                        Tipo de documento:
+                    </label>
+
+                    <select
+                        id="tipoDocumento"
                         name="TipoDocumento"
-                        required>
-                    <option value="">Seleccionar</option>
-                    <option value="Cédula">Cédula</option>
-                    <option value="Licencia de conducir">
-                        Licencia de conducir
-                    </option>
-                    <option value="Otro">Otro</option>
-                </select>
+                        required
+                    >
+                        <option value="">Seleccionar</option>
+                        <option value="Cédula">Cédula</option>
+                        <option value="Licencia de conducir">
+                            Licencia de conducir
+                        </option>
+                        <option value="Otro">Otro</option>
+                    </select>
 
-                <br><br>
+                    <br><br>
 
-                <label for="nombreVisible">Nombre visible:</label>
-                <input type="text"
-                       id="nombreVisible"
-                       name="NombreVisible"
-                       required>
+                    <label for="nombreVisible">Nombre visible:</label>
+                    <input
+                        type="text"
+                        id="nombreVisible"
+                        name="NombreVisible"
+                        maxlength="120"
+                        required
+                    >
 
-                <br><br>
+                    <br><br>
 
-                <label for="numeroDocumento">
-                    Últimos 4 dígitos:
-                </label>
-                <input type="text"
-                       id="numeroDocumento"
-                       name="NumeroDocumento"
-                       maxlength="4"
-                       pattern="[0-9]{1,4}"
-                       inputmode="numeric">
+                    <label for="numeroDocumento">
+                        Últimos 4 dígitos:
+                    </label>
+                    <input
+                        type="text"
+                        id="numeroDocumento"
+                        name="NumeroDocumento"
+                        maxlength="4"
+                        pattern="[0-9]{1,4}"
+                        inputmode="numeric"
+                    >
 
-                <br><br>
+                    <br><br>
 
-                <label for="zonaReporte">Zona:</label>
-                <select id="zonaReporte" name="Zona" required>
-                    <option value="">Seleccionar zona</option>
-                </select>
+                    <label for="zonaReporte">Zona:</label>
+                    <select id="zonaReporte" name="Zona" required>
+                        <option value="">Seleccionar zona</option>
+                    </select>
 
-                <br><br>
+                    <br><br>
 
-                <label for="fechaHallazgo">
-                    Fecha del hallazgo:
-                </label>
-                <input type="date"
-                       id="fechaHallazgo"
-                       name="FechaHallazgo">
+                    <label for="fechaHallazgo">
+                        Fecha del hallazgo:
+                    </label>
+                    <input
+                        type="date"
+                        id="fechaHallazgo"
+                        name="FechaHallazgo"
+                    >
 
-                <br><br>
+                    <br><br>
 
-                <label for="lugarHallazgo">
-                    Lugar donde fue encontrado:
-                </label>
-                <input type="text"
-                       id="lugarHallazgo"
-                       name="LugarHallazgo"
-                       required>
+                    <label for="lugarHallazgo">
+                        Lugar donde fue encontrado:
+                    </label>
+                    <input
+                        type="text"
+                        id="lugarHallazgo"
+                        name="LugarHallazgo"
+                        maxlength="200"
+                        required
+                    >
 
-                <br><br>
+                    <br><br>
 
-                <label for="descripcion">Descripción:</label>
-                <textarea id="descripcion"
-                          name="Descripcion"></textarea>
+                    <label for="descripcion">Descripción:</label>
+                    <textarea
+                        id="descripcion"
+                        name="Descripcion"
+                        maxlength="1000"
+                    ></textarea>
 
-                <br><br>
+                    <br><br>
 
-                <button type="submit">
-                    Registrar documento
-                </button>
+                    <button type="submit">
+                        Registrar documento
+                    </button>
+                </fieldset>
             </form>
 
-            <p id="mensajeRegistro"
-               role="status"
-               aria-live="polite"></p>
+            <p id="mensajeRegistro" role="status" aria-live="polite"></p>
         </section>
 
-        <!-- RECLAMOS -->
         <section id="reclamos">
             <h2>Reclamar documento</h2>
 
@@ -356,62 +341,71 @@
                 para solicitar su recuperación.
             </p>
 
-            <form id="formReclamo">
-                <label for="documentoReclamo">Documento:</label>
+            <p class="avisoSesion">
+                Inicia sesión para reclamar un documento.
+            </p>
 
-                <select id="documentoReclamo"
+            <form id="formReclamo">
+                <fieldset id="camposReclamo" disabled>
+                    <legend>Datos del reclamo</legend>
+
+                    <label for="documentoReclamo">Documento:</label>
+                    <select
+                        id="documentoReclamo"
                         name="IDDocumento"
                         required
-                        disabled>
-                    <option value="">Cargando documentos...</option>
-                </select>
+                    >
+                        <option value="">Cargando documentos...</option>
+                    </select>
 
-                <button type="button" id="actualizarReclamos">
-                    Actualizar documentos
-                </button>
+                    <button type="button" id="actualizarReclamos">
+                        Actualizar documentos
+                    </button>
 
-                <br><br>
+                    <br><br>
 
-                <label for="nombreSolicitante">
-                    Tu nombre completo:
-                </label>
-                <input type="text"
-                       id="nombreSolicitante"
-                       name="NombreSolicitante"
-                       maxlength="120"
-                       autocomplete="name"
-                       required>
+                    <label for="nombreSolicitante">
+                        Tu nombre completo:
+                    </label>
+                    <input
+                        type="text"
+                        id="nombreSolicitante"
+                        name="NombreSolicitante"
+                        maxlength="120"
+                        autocomplete="name"
+                        readonly
+                        required
+                    >
 
-                <br><br>
+                    <br><br>
 
-                <label for="datoVerificacion">
-                    Dato para verificar que el documento es tuyo:
-                </label>
+                    <label for="datoVerificacion">
+                        Dato para verificar que el documento es tuyo:
+                    </label>
 
-                <br>
+                    <br>
 
-                <textarea id="datoVerificacion"
-                          name="DatoVerificacion"
-                          maxlength="500"
-                          aria-describedby="ayudaVerificacion"
-                          required></textarea>
+                    <textarea
+                        id="datoVerificacion"
+                        name="DatoVerificacion"
+                        maxlength="500"
+                        aria-describedby="ayudaVerificacion"
+                        required
+                    ></textarea>
 
-                <p id="ayudaVerificacion">
-                    Describe un dato que permita verificar la propiedad.
-                    No escribas tu número completo de identidad
-                    ni contraseñas.
-                </p>
+                    <p id="ayudaVerificacion">
+                        Describe un dato que permita verificar la propiedad.
+                        No escribas tu número completo de identidad
+                        ni contraseñas.
+                    </p>
 
-                <button type="submit"
-                        id="enviarReclamo"
-                        disabled>
-                    Enviar reclamo
-                </button>
+                    <button type="submit" id="enviarReclamo">
+                        Enviar reclamo
+                    </button>
+                </fieldset>
             </form>
 
-            <p id="mensajeReclamo"
-               role="status"
-               aria-live="polite"></p>
+            <p id="mensajeReclamo" role="status" aria-live="polite"></p>
         </section>
 
     </main>
@@ -421,175 +415,7 @@
         <p>Cochabamba - Bolivia</p>
     </footer>
 
-    <!-- CONSERVAR EL ARCHIVO script.js EN EL REPOSITORIO -->
-    <script src="script.js"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const formulario = document.getElementById("formReclamo");
-            const selector = document.getElementById("documentoReclamo");
-            const boton = document.getElementById("enviarReclamo");
-            const actualizar = document.getElementById("actualizarReclamos");
-            const mensaje = document.getElementById("mensajeReclamo");
-
-            let enviando = false;
-
-            function estaDisponible(documento) {
-                const estado = String(documento.Estado || "")
-                    .trim()
-                    .toLowerCase();
-
-                return ["disponible", "encontrado"].includes(estado);
-            }
-
-            async function cargarDocumentosReclamo() {
-                selector.disabled = true;
-                boton.disabled = true;
-                actualizar.disabled = true;
-
-                selector.replaceChildren(
-                    new Option("Cargando documentos...", "")
-                );
-
-                mensaje.textContent = "";
-
-                try {
-                    const documentos = await consultarAPI("documentos");
-
-                    const disponibles = documentos.filter(function (doc) {
-                        return doc.IDDocumento && estaDisponible(doc);
-                    });
-
-                    selector.replaceChildren(
-                        new Option(
-                            disponibles.length
-                                ? "Seleccionar documento"
-                                : "No hay documentos disponibles",
-                            ""
-                        )
-                    );
-
-                    disponibles.forEach(function (doc) {
-                        const texto = [
-                            doc.IDDocumento,
-                            doc.TipoDocumento,
-                            doc.NombreVisible,
-                            doc.Zona
-                        ].filter(Boolean).join(" - ");
-
-                        selector.add(
-                            new Option(texto, doc.IDDocumento)
-                        );
-                    });
-
-                    selector.disabled = disponibles.length === 0;
-                    boton.disabled = disponibles.length === 0;
-
-                } catch (error) {
-                    selector.replaceChildren(
-                        new Option("Error al cargar documentos", "")
-                    );
-
-                    mensaje.textContent =
-                        "No se pudieron cargar los documentos: " +
-                        error.message +
-                        ". Pulsa Actualizar documentos para reintentar.";
-
-                } finally {
-                    actualizar.disabled = false;
-                }
-            }
-
-            formulario.addEventListener("submit", async function (evento) {
-                evento.preventDefault();
-
-                if (enviando || !formulario.reportValidity()) {
-                    return;
-                }
-
-                const datos = Object.fromEntries(
-                    new FormData(formulario).entries()
-                );
-
-                datos.NombreSolicitante =
-                    datos.NombreSolicitante.trim();
-
-                datos.DatoVerificacion =
-                    datos.DatoVerificacion.trim();
-
-                if (
-                    !datos.IDDocumento ||
-                    !datos.NombreSolicitante ||
-                    !datos.DatoVerificacion
-                ) {
-                    mensaje.textContent =
-                        "Completa todos los campos. " +
-                        "No se permiten campos con solo espacios.";
-                    return;
-                }
-
-                enviando = true;
-                boton.disabled = true;
-                actualizar.disabled = true;
-
-                mensaje.textContent = "Enviando reclamo...";
-
-                try {
-                    const documentos = await consultarAPI("documentos");
-
-                    const documento = documentos.find(function (doc) {
-                        return String(doc.IDDocumento) === datos.IDDocumento;
-                    });
-
-                    if (!documento || !estaDisponible(documento)) {
-                        await cargarDocumentosReclamo();
-
-                        mensaje.textContent =
-                            "Ese documento ya no está disponible. " +
-                            "Selecciona otro documento.";
-                        return;
-                    }
-
-                    // Apps Script genera el ID consecutivo , etc.
-                    datos.accion = "agregarReclamo";
-
-                    await fetch(API_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: {
-                            "Content-Type": "text/plain"
-                        },
-                        body: JSON.stringify(datos)
-                    });
-
-                    formulario.reset();
-
-                    // no-cors no permite leer la respuesta del servidor.
-                    mensaje.textContent =
-                        "Solicitud enviada. Revisa la hoja Reclamos " +
-                        "para confirmar el registro y consultar su código.";
-
-                } catch (error) {
-                    mensaje.textContent =
-                        "No se pudo confirmar el envío: " +
-                        error.message +
-                        ". Revisa la hoja Reclamos antes de volver a enviar.";
-
-                } finally {
-                    enviando = false;
-                    boton.disabled = selector.disabled;
-                    actualizar.disabled = false;
-                }
-            });
-
-            actualizar.addEventListener(
-                "click",
-                cargarDocumentosReclamo
-            );
-
-            cargarDocumentosReclamo();
-        });
-    </script>
+    <script src="script.js" defer></script>
 
 </body>
 </html>
