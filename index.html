@@ -96,7 +96,6 @@
                         <th>Estado</th>
                     </tr>
                 </thead>
-
                 <tbody id="tablaDocumentos"></tbody>
             </table>
 
@@ -183,7 +182,9 @@
                 </button>
             </form>
 
-            <p id="mensajeRegistro" role="status" aria-live="polite"></p>
+            <p id="mensajeRegistro"
+               role="status"
+               aria-live="polite"></p>
         </section>
 
         <!-- RECLAMOS -->
@@ -241,7 +242,9 @@
                     ni contraseñas.
                 </p>
 
-                <button type="submit" id="enviarReclamo" disabled>
+                <button type="submit"
+                        id="enviarReclamo"
+                        disabled>
                     Enviar reclamo
                 </button>
             </form>
@@ -254,16 +257,13 @@
     </main>
 
     <footer>
-        <p>
-            Sistema web colaborativo de documentos extraviados
-        </p>
+        <p>Sistema web colaborativo de documentos extraviados</p>
         <p>Cochabamba - Bolivia</p>
     </footer>
 
-    <!-- FUNCIONES EXISTENTES DEL SISTEMA -->
+    <!-- CONSERVAR EL ARCHIVO script.js EN EL REPOSITORIO -->
     <script src="script.js"></script>
 
-    <!-- FUNCIONES DEL FORMULARIO DE RECLAMOS -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const formulario = document.getElementById("formReclamo");
@@ -375,7 +375,6 @@
                 mensaje.textContent = "Enviando reclamo...";
 
                 try {
-                    // Revisar nuevamente la disponibilidad antes del envío.
                     const documentos = await consultarAPI("documentos");
 
                     const documento = documentos.find(function (doc) {
@@ -391,9 +390,8 @@
                         return;
                     }
 
+                    // Apps Script genera el ID consecutivo , etc.
                     datos.accion = "agregarReclamo";
-                    datos.IDReclamo = "REC-" + crypto.randomUUID();
-                    datos.Estado = "Pendiente";
 
                     await fetch(API_URL, {
                         method: "POST",
@@ -406,11 +404,10 @@
 
                     formulario.reset();
 
-                    // Con no-cors no se puede leer la respuesta del servidor.
+                    // no-cors no permite leer la respuesta del servidor.
                     mensaje.textContent =
-                        "Solicitud enviada. Código: " +
-                        datos.IDReclamo +
-                        ". Revisa la hoja Reclamos para confirmar que se guardó.";
+                        "Solicitud enviada. Revisa la hoja Reclamos " +
+                        "para confirmar el registro y consultar su código.";
 
                 } catch (error) {
                     mensaje.textContent =
