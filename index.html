@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -12,7 +11,6 @@
 
     <header>
         <h1>DocuCochabamba</h1>
-
         <p>
             Sistema colaborativo para el reporte y búsqueda
             de documentos extraviados en Cochabamba.
@@ -31,7 +29,6 @@
 
         <!-- DASHBOARD -->
         <section id="inicio">
-
             <h2>Dashboard</h2>
             <p>Resumen del sistema</p>
 
@@ -54,16 +51,13 @@
                 <h3>Zonas registradas</h3>
                 <p id="totalZonas">0</p>
             </div>
-
         </section>
 
         <!-- BUSCAR DOCUMENTOS -->
         <section id="buscar">
-
             <h2>Buscar documento</h2>
 
             <form id="formBuscar">
-
                 <label for="buscarNombre">Nombre:</label>
                 <input type="text" id="buscarNombre">
 
@@ -77,7 +71,6 @@
                 <br><br>
 
                 <label for="buscarZona">Zona:</label>
-
                 <select id="buscarZona">
                     <option value="">Todas las zonas</option>
                 </select>
@@ -85,18 +78,14 @@
                 <br><br>
 
                 <button type="submit">Buscar</button>
-
             </form>
-
         </section>
 
         <!-- LISTA DE DOCUMENTOS -->
         <section id="documentos">
-
             <h2>Documentos encontrados</h2>
 
             <table border="1">
-
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -108,62 +97,56 @@
                     </tr>
                 </thead>
 
-                <tbody id="tablaDocumentos">
-                </tbody>
-
+                <tbody id="tablaDocumentos"></tbody>
             </table>
 
             <p id="mensajeDocumentos"></p>
-
         </section>
 
         <!-- REPORTAR DOCUMENTO -->
         <section id="reportar">
-
             <h2>Reportar documento encontrado</h2>
-
             <p>Formulario de registro de documentos.</p>
 
             <form id="formReportar">
-
                 <label for="tipoDocumento">
                     Tipo de documento:
                 </label>
 
                 <select id="tipoDocumento"
-                        name="TipoDocumento" required>
-
+                        name="TipoDocumento"
+                        required>
                     <option value="">Seleccionar</option>
                     <option value="Cédula">Cédula</option>
                     <option value="Licencia de conducir">
                         Licencia de conducir
                     </option>
                     <option value="Otro">Otro</option>
-
                 </select>
 
                 <br><br>
 
                 <label for="nombreVisible">Nombre visible:</label>
-                <input type="text" id="nombreVisible"
-                       name="NombreVisible" required>
+                <input type="text"
+                       id="nombreVisible"
+                       name="NombreVisible"
+                       required>
 
                 <br><br>
 
                 <label for="numeroDocumento">
                     Últimos 4 dígitos:
                 </label>
-
                 <input type="text"
                        id="numeroDocumento"
                        name="NumeroDocumento"
                        maxlength="4"
-                       pattern="[0-9]{1,4}">
+                       pattern="[0-9]{1,4}"
+                       inputmode="numeric">
 
                 <br><br>
 
                 <label for="zonaReporte">Zona:</label>
-
                 <select id="zonaReporte" name="Zona" required>
                     <option value="">Seleccionar zona</option>
                 </select>
@@ -173,7 +156,6 @@
                 <label for="fechaHallazgo">
                     Fecha del hallazgo:
                 </label>
-
                 <input type="date"
                        id="fechaHallazgo"
                        name="FechaHallazgo">
@@ -183,7 +165,6 @@
                 <label for="lugarHallazgo">
                     Lugar donde fue encontrado:
                 </label>
-
                 <input type="text"
                        id="lugarHallazgo"
                        name="LugarHallazgo"
@@ -192,7 +173,6 @@
                 <br><br>
 
                 <label for="descripcion">Descripción:</label>
-
                 <textarea id="descripcion"
                           name="Descripcion"></textarea>
 
@@ -201,39 +181,258 @@
                 <button type="submit">
                     Registrar documento
                 </button>
-
             </form>
 
-            <p id="mensajeRegistro"></p>
-
+            <p id="mensajeRegistro" role="status" aria-live="polite"></p>
         </section>
 
         <!-- RECLAMOS -->
         <section id="reclamos">
-
             <h2>Reclamar documento</h2>
 
             <p>
-                Esta sección se encuentra en desarrollo.
-                Próximamente se habilitará el formulario
-                para solicitar la recuperación de documentos.
+                Selecciona el documento y completa tus datos
+                para solicitar su recuperación.
             </p>
 
+            <form id="formReclamo">
+                <label for="documentoReclamo">Documento:</label>
+
+                <select id="documentoReclamo"
+                        name="IDDocumento"
+                        required
+                        disabled>
+                    <option value="">Cargando documentos...</option>
+                </select>
+
+                <button type="button" id="actualizarReclamos">
+                    Actualizar documentos
+                </button>
+
+                <br><br>
+
+                <label for="nombreSolicitante">
+                    Tu nombre completo:
+                </label>
+                <input type="text"
+                       id="nombreSolicitante"
+                       name="NombreSolicitante"
+                       maxlength="120"
+                       autocomplete="name"
+                       required>
+
+                <br><br>
+
+                <label for="datoVerificacion">
+                    Dato para verificar que el documento es tuyo:
+                </label>
+
+                <br>
+
+                <textarea id="datoVerificacion"
+                          name="DatoVerificacion"
+                          maxlength="500"
+                          aria-describedby="ayudaVerificacion"
+                          required></textarea>
+
+                <p id="ayudaVerificacion">
+                    Describe un dato que permita verificar la propiedad.
+                    No escribas tu número completo de identidad
+                    ni contraseñas.
+                </p>
+
+                <button type="submit" id="enviarReclamo" disabled>
+                    Enviar reclamo
+                </button>
+            </form>
+
+            <p id="mensajeReclamo"
+               role="status"
+               aria-live="polite"></p>
         </section>
 
     </main>
 
     <footer>
-
         <p>
             Sistema web colaborativo de documentos extraviados
         </p>
-
         <p>Cochabamba - Bolivia</p>
-
     </footer>
 
+    <!-- FUNCIONES EXISTENTES DEL SISTEMA -->
     <script src="script.js"></script>
+
+    <!-- FUNCIONES DEL FORMULARIO DE RECLAMOS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formulario = document.getElementById("formReclamo");
+            const selector = document.getElementById("documentoReclamo");
+            const boton = document.getElementById("enviarReclamo");
+            const actualizar = document.getElementById("actualizarReclamos");
+            const mensaje = document.getElementById("mensajeReclamo");
+
+            let enviando = false;
+
+            function estaDisponible(documento) {
+                const estado = String(documento.Estado || "")
+                    .trim()
+                    .toLowerCase();
+
+                return ["disponible", "encontrado"].includes(estado);
+            }
+
+            async function cargarDocumentosReclamo() {
+                selector.disabled = true;
+                boton.disabled = true;
+                actualizar.disabled = true;
+
+                selector.replaceChildren(
+                    new Option("Cargando documentos...", "")
+                );
+
+                mensaje.textContent = "";
+
+                try {
+                    const documentos = await consultarAPI("documentos");
+
+                    const disponibles = documentos.filter(function (doc) {
+                        return doc.IDDocumento && estaDisponible(doc);
+                    });
+
+                    selector.replaceChildren(
+                        new Option(
+                            disponibles.length
+                                ? "Seleccionar documento"
+                                : "No hay documentos disponibles",
+                            ""
+                        )
+                    );
+
+                    disponibles.forEach(function (doc) {
+                        const texto = [
+                            doc.IDDocumento,
+                            doc.TipoDocumento,
+                            doc.NombreVisible,
+                            doc.Zona
+                        ].filter(Boolean).join(" - ");
+
+                        selector.add(
+                            new Option(texto, doc.IDDocumento)
+                        );
+                    });
+
+                    selector.disabled = disponibles.length === 0;
+                    boton.disabled = disponibles.length === 0;
+
+                } catch (error) {
+                    selector.replaceChildren(
+                        new Option("Error al cargar documentos", "")
+                    );
+
+                    mensaje.textContent =
+                        "No se pudieron cargar los documentos: " +
+                        error.message +
+                        ". Pulsa Actualizar documentos para reintentar.";
+
+                } finally {
+                    actualizar.disabled = false;
+                }
+            }
+
+            formulario.addEventListener("submit", async function (evento) {
+                evento.preventDefault();
+
+                if (enviando || !formulario.reportValidity()) {
+                    return;
+                }
+
+                const datos = Object.fromEntries(
+                    new FormData(formulario).entries()
+                );
+
+                datos.NombreSolicitante =
+                    datos.NombreSolicitante.trim();
+
+                datos.DatoVerificacion =
+                    datos.DatoVerificacion.trim();
+
+                if (
+                    !datos.IDDocumento ||
+                    !datos.NombreSolicitante ||
+                    !datos.DatoVerificacion
+                ) {
+                    mensaje.textContent =
+                        "Completa todos los campos. " +
+                        "No se permiten campos con solo espacios.";
+                    return;
+                }
+
+                enviando = true;
+                boton.disabled = true;
+                actualizar.disabled = true;
+
+                mensaje.textContent = "Enviando reclamo...";
+
+                try {
+                    // Revisar nuevamente la disponibilidad antes del envío.
+                    const documentos = await consultarAPI("documentos");
+
+                    const documento = documentos.find(function (doc) {
+                        return String(doc.IDDocumento) === datos.IDDocumento;
+                    });
+
+                    if (!documento || !estaDisponible(documento)) {
+                        await cargarDocumentosReclamo();
+
+                        mensaje.textContent =
+                            "Ese documento ya no está disponible. " +
+                            "Selecciona otro documento.";
+                        return;
+                    }
+
+                    datos.accion = "agregarReclamo";
+                    datos.IDReclamo = "REC-" + crypto.randomUUID();
+                    datos.Estado = "Pendiente";
+
+                    await fetch(API_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: {
+                            "Content-Type": "text/plain"
+                        },
+                        body: JSON.stringify(datos)
+                    });
+
+                    formulario.reset();
+
+                    // Con no-cors no se puede leer la respuesta del servidor.
+                    mensaje.textContent =
+                        "Solicitud enviada. Código: " +
+                        datos.IDReclamo +
+                        ". Revisa la hoja Reclamos para confirmar que se guardó.";
+
+                } catch (error) {
+                    mensaje.textContent =
+                        "No se pudo confirmar el envío: " +
+                        error.message +
+                        ". Revisa la hoja Reclamos antes de volver a enviar.";
+
+                } finally {
+                    enviando = false;
+                    boton.disabled = selector.disabled;
+                    actualizar.disabled = false;
+                }
+            });
+
+            actualizar.addEventListener(
+                "click",
+                cargarDocumentosReclamo
+            );
+
+            cargarDocumentosReclamo();
+        });
+    </script>
 
 </body>
 </html>
