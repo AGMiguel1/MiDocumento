@@ -1,466 +1,184 @@
-
 const API_URL = "https://script.google.com/macros/s/AKfycbxtqoVlGPXG3CK3FsjnzqgD4UmIJy2Jq7sDMNkBNffM30pcoS2Tev6S1Zz1h_em6k9H/exec";
-
 let documentos = [];
+let token = sessionStorage.getItem("docuSesion") || "";
+let usuario = null;
 let contador = 0;
+const $ = id => document.getElementById(id);
+const esperar = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-
-// ==========================================
-// 1. CONECTAR CON GOOGLE APPS SCRIPT
-// ==========================================
-
-function consultarAPI(accion) {
-
+function consultarAPI(accion, extras = {}) {
     return new Promise((resolve, reject) => {
-
-        const callback = "respuesta_" + (++contador);
+        const callback = "docu_" + Date.now() + "_" + (++contador);
         const script = document.createElement("script");
-
-        let terminado = false;
-
-        const timeout = setTimeout(() => {
-            finalizarError(
-                new Error("Tiempo de espera agotado")
-            );
-        }, 15000);
-
-        function limpiar() {
-            clearTimeout(timeout);
+        const timer = setTimeout(() => terminar(new Error("Tiempo de espera agotado")), 15000);
+        function terminar(error, resultado) {
+            clearTimeout(timer);
             script.remove();
-            delete window[callback];
+            // Ignorar una respuesta tardía y evitar errores al terminar el timeout.
+            window[callback] = () => {};
+            setTimeout(() => delete window[callback], 60000);
+            if (error) reject(error); else resolve(resultado);
         }
-
-        function finalizarError(error) {
-            if (terminado) return;
-
-            terminado = true;
-            limpiar();
-            reject(error);
-        }
-
-        window[callback] = function(respuesta) {
-
-            if (terminado) return;
-
-            terminado = true;
-            limpiar();
-
-            if (respuesta && respuesta.estado === "ok") {
-                resolve(respuesta.datos);
-            } else {
-                reject(new Error(
-                    respuesta?.mensaje || "Respuesta incorrecta"
-                ));
-            }
+        window[callback] = resultado => {
+            if (resultado.estado === "error") terminar(new Error(resultado.mensaje));
+            else terminar(null, resultado);
         };
-
-        script.onerror = function() {
-
-            console.error(
-                "Error al cargar Apps Script:",
-                script.src
-            );
-
-            finalizarError(new Error(
-                "No se pudo conectar con Apps Script. " +
-                "Revisa la URL, permisos y versión publicada."
-            ));
-        };
-
-        script.src = API_URL
-            + "?accion=" + encodeURIComponent(accion)
-            + "&callback=" + encodeURIComponent(callback);
-
+        script.onerror = () => terminar(new Error("No se pudo conectar con Apps Script. Revisa su implementación"));
+        const query = new URLSearchParams({ accion, callback, ...extras });
+        script.src = API_URL + "?" + query;
         document.body.appendChild(script);
-
     });
 }
-
-
-// ==========================================
-// 2. CARGAR DASHBOARD
-// ==========================================
-
+async function enviarAPI(accion, datos = {}) {
+    const solicitud = Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, "0")).join("");
+    const limite = Date.now() + 90000;
+    // POST sin reintentos automáticos para no duplicar registros.
+    await fetch(API_URL, {
+        method: "POST", mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ ...datos, accion, solicitud, token })
+    });
+    while (Date.now() < limite) {
+        const resultado = await consultarAPI("resultado", { solicitud });
+        if (resultado.estado === "ok") return resultado.datos;
+        await esperar(1500);
+    }
+    throw new Error("No se pudo confirmar el resultado. Revisa la hoja antes de volver a registrar");
+}
+function mostrarSesion(perfil, nuevoToken) {
+    usuario = perfil;
+    token = nuevoToken || "";
+    if (token) sessionStorage.setItem("docuSesion", token);
+    else sessionStorage.removeItem("docuSesion");
+    $("sesionActual").hidden = !perfil;
+    $("iniciarSesion").hidden = Boolean(perfil);
+    $("crearUsuario").hidden = Boolean(perfil);
+    $("nombreSesion").textContent = perfil ? perfil.Nombre + " (" + perfil.IDUsuario + ")" : "";
+    $("nombreSolicitante").value = perfil ? perfil.Nombre : "";
+    ["camposReporte", "camposReclamo"].forEach(id => $(id).disabled = !perfil);
+    document.querySelectorAll(".avisoSesion").forEach(el => el.hidden = Boolean(perfil));
+}
 async function cargarDashboard() {
-
-    const datos = await consultarAPI("dashboard");
-
-    document.getElementById("totalDocumentos").textContent =
-        datos.documentosEncontrados;
-
-    document.getElementById("totalReclamados").textContent =
-        datos.documentosReclamados;
-
-    document.getElementById("totalPendientes").textContent =
-        datos.reclamosPendientes;
-
-    document.getElementById("totalZonas").textContent =
-        datos.zonasRegistradas;
-
-    console.log("Dashboard cargado correctamente");
-
+    const { datos } = await consultarAPI("dashboard");
+    const campos = { totalDocumentos: "documentosEncontrados", totalReclamados: "documentosReclamados", totalPendientes: "reclamosPendientes", totalZonas: "zonasRegistradas" };
+    Object.entries(campos).forEach(([id, campo]) => $(id).textContent = datos[campo]);
 }
-
-
-// ==========================================
-// 3. CARGAR ZONAS DESDE GOOGLE SHEETS
-// ==========================================
-
 async function cargarZonas() {
-
-    const zonas = await consultarAPI("zonas");
-
-    const buscar = document.getElementById("buscarZona");
-    const reportar = document.getElementById("zonaReporte");
-
-    if (!buscar || !reportar) {
-        throw new Error(
-            "No se encontraron los selectores de zonas en HTML"
-        );
-    }
-
-    buscar.innerHTML =
-        '<option value="">Todas las zonas</option>';
-
-    reportar.innerHTML =
-        '<option value="">Seleccionar zona</option>';
-
-    zonas.forEach(zona => {
-
-        if (!zona.Zona) return;
-
-        [buscar, reportar].forEach(select => {
-
-            const opcion = document.createElement("option");
-
-            opcion.value = zona.Zona;
-            opcion.textContent = zona.Zona;
-
-            select.appendChild(opcion);
-
-        });
-
+    const { datos } = await consultarAPI("zonas");
+    $("buscarZona").replaceChildren(new Option("Todas las zonas", ""));
+    $("zonaReporte").replaceChildren(new Option("Seleccionar zona", ""));
+    datos.forEach(z => {
+        if (!z.Zona) return;
+        ["buscarZona", "zonaReporte"].forEach(id => $(id).add(new Option(z.Zona, z.Zona)));
     });
-
-    console.log("Zonas cargadas:", zonas.length);
-
 }
-
-
-// ==========================================
-// 4. MOSTRAR DOCUMENTOS EN LA TABLA
-// ==========================================
-
+function disponible(doc) { return ["disponible", "encontrado"].includes(String(doc.Estado || "").trim().toLowerCase()); }
 function mostrarDocumentos(lista) {
-
-    const tabla = document.getElementById("tablaDocumentos");
-    const mensaje = document.getElementById("mensajeDocumentos");
-
-    if (!tabla || !mensaje) return;
-
-    tabla.innerHTML = "";
-
-    if (lista.length === 0) {
-
-        mensaje.textContent =
-            "No se encontraron documentos.";
-
-        return;
-    }
-
-    mensaje.textContent = "";
-
-    lista.forEach(documento => {
-
+    $("tablaDocumentos").replaceChildren();
+    $("mensajeDocumentos").textContent = lista.length ? "" : "No se encontraron documentos";
+    lista.forEach(doc => {
         const fila = document.createElement("tr");
-
-        const campos = [
-            "IDDocumento",
-            "TipoDocumento",
-            "NombreVisible",
-            "NumeroDocumento",
-            "Zona",
-            "Estado"
-        ];
-
-        campos.forEach(campo => {
-
+        ["IDDocumento", "TipoDocumento", "NombreVisible", "NumeroDocumento", "Zona", "Estado"].forEach(campo => {
             const celda = document.createElement("td");
-
-            celda.textContent = documento[campo] || "";
-
-            fila.appendChild(celda);
-
+            celda.textContent = doc[campo] || "";
+            fila.append(celda);
         });
-
-        tabla.appendChild(fila);
-
+        $("tablaDocumentos").append(fila);
     });
-
 }
-
-
-// ==========================================
-// 5. CARGAR DOCUMENTOS DE GOOGLE SHEETS
-// ==========================================
-
 async function cargarDocumentos() {
-
-    const datos = await consultarAPI("documentos");
-
+    const { datos } = await consultarAPI("documentos");
     documentos = datos;
-
     mostrarDocumentos(documentos);
-
-    console.log(
-        "Documentos cargados:",
-        documentos.length
-    );
-
+    const disponibles = documentos.filter(disponible);
+    $("documentoReclamo").replaceChildren(new Option(disponibles.length ? "Seleccionar documento" : "No hay documentos disponibles", ""));
+    disponibles.forEach(doc => $("documentoReclamo").add(new Option(
+        [doc.IDDocumento, doc.TipoDocumento, doc.NombreVisible, doc.Zona].filter(Boolean).join(" - "), doc.IDDocumento
+    )));
 }
-
-
-// ==========================================
-// 6. BUSCAR DOCUMENTOS
-// ==========================================
-
-function buscarDocumentos(evento) {
-
-    evento.preventDefault();
-
-    const nombre = document.getElementById("buscarNombre")
-        .value.toLowerCase().trim();
-
-    const numero = document.getElementById("buscarNumero")
-        .value.trim();
-
-    const zona = document.getElementById("buscarZona")
-        .value;
-
-    const resultados = documentos.filter(documento => {
-
-        const coincideNombre =
-            String(documento.NombreVisible || "")
-                .toLowerCase()
-                .includes(nombre);
-
-        const coincideNumero =
-            String(documento.NumeroDocumento || "")
-                .includes(numero);
-
-        const coincideZona =
-            zona === "" || documento.Zona === zona;
-
-        return coincideNombre &&
-               coincideNumero &&
-               coincideZona;
-
+function conectarFormulario(id, mensajeId, trabajo) {
+    const form = $(id);
+    let ocupado = false;
+    form.addEventListener("submit", async evento => {
+        evento.preventDefault();
+        if (ocupado || !form.reportValidity()) return;
+        ocupado = true;
+        const boton = form.querySelector('button[type="submit"]');
+        boton.disabled = true;
+        $(mensajeId).textContent = "Procesando...";
+        try { await trabajo(form); }
+        catch (error) { $(mensajeId).textContent = error.message; }
+        finally { ocupado = false; boton.disabled = false; }
     });
-
-    mostrarDocumentos(resultados);
-
-    console.log(
-        "Resultados encontrados:",
-        resultados.length
-    );
-
 }
-
-
-// ==========================================
-// 7. REGISTRAR DOCUMENTO DE PRUEBA
-// ==========================================
-
-async function registrarDocumento(evento) {
-
-    evento.preventDefault();
-
-    const formulario = evento.target;
-
-    const mensaje =
-        document.getElementById("mensajeRegistro");
-
-    const boton =
-        formulario.querySelector('button[type="submit"]');
-
-    const datos = Object.fromEntries(
-        new FormData(formulario).entries()
-    );
-
-    datos.accion = "agregarDocumento";
-
-    if (!datos.Zona) {
-
-        mensaje.textContent =
-            "Debes seleccionar una zona.";
-
-        return;
-    }
-
-    boton.disabled = true;
-
-    mensaje.textContent =
-        "Enviando documento...";
-
-    try {
-
-        await fetch(API_URL, {
-
-            method: "POST",
-
-            mode: "no-cors",
-
-            headers: {
-                "Content-Type": "text/plain"
-            },
-
-            body: JSON.stringify(datos)
-
-        });
-
-        mensaje.textContent =
-            "Solicitud enviada. Revisa Google Sheets " +
-            "para confirmar que se guardó.";
-
-        console.log(
-            "Solicitud de registro enviada"
-        );
-
-        formulario.reset();
-
-    } catch (error) {
-
-        console.error(
-            "Error al enviar documento:",
-            error
-        );
-
-        mensaje.textContent =
-            "Error al enviar: " + error.message;
-
-    } finally {
-
-        boton.disabled = false;
-
-    }
-
+async function actualizarDatos() {
+    const resultados = await Promise.allSettled([cargarDashboard(), cargarZonas(), cargarDocumentos()]);
+    const fallos = resultados.filter(r => r.status === "rejected");
+    $("estadoCarga").textContent = fallos.length ? "No se pudo actualizar parte de los datos: " + fallos.map(r => r.reason.message).join(". ") : "";
 }
-
-
-// ==========================================
-// 8. INICIAR SISTEMA
-// ==========================================
-
-async function iniciar() {
-
-    console.log("Iniciando DocuCochabamba...");
-
-    const formBuscar =
-        document.getElementById("formBuscar");
-
-    const formReportar =
-        document.getElementById("formReportar");
-
-    if (formBuscar) {
-
-        formBuscar.addEventListener(
-            "submit",
-            buscarDocumentos
-        );
-
-    }
-
-    if (formReportar) {
-
-        formReportar.addEventListener(
-            "submit",
-            registrarDocumento
-        );
-
-    }
-
-    // Consultar cada sección de forma independiente
-
-    const resultados = await Promise.allSettled([
-
-        cargarDashboard(),
-
-        cargarZonas(),
-
-        cargarDocumentos()
-
-    ]);
-
-    const nombres = [
-        "Dashboard",
-        "Zonas",
-        "Documentos"
-    ];
-
-    resultados.forEach((resultado, indice) => {
-
-        if (resultado.status === "fulfilled") {
-
-            console.log(
-                nombres[indice] + " cargado correctamente"
-            );
-
-        } else {
-
-            console.error(
-                "Error en " + nombres[indice] + ":",
-                resultado.reason
-            );
-
-        }
-
+document.addEventListener("DOMContentLoaded", async () => {
+    mostrarSesion(null, token);
+    const validar = () => $("confirmarClave").setCustomValidity(
+        $("claveUsuario").value === $("confirmarClave").value ? "" : "Las contraseñas no coinciden"
+    );
+    $("claveUsuario").addEventListener("input", validar);
+    $("confirmarClave").addEventListener("input", validar);
+    conectarFormulario("formCrearUsuario", "mensajeUsuario", async form => {
+        validar();
+        if (!form.reportValidity()) return;
+        const datos = Object.fromEntries(new FormData(form));
+        delete datos.confirmacion;
+        const resultado = await enviarAPI("agregarUsuario", datos);
+        form.reset();
+        $("confirmarClave").setCustomValidity("");
+        mostrarSesion(resultado.usuario, resultado.token);
+        $("estadoSesion").textContent = "Cuenta creada e inicio de sesión confirmado";
     });
-
-    // Mostrar error de documentos
-
-    if (resultados[2].status === "rejected") {
-
-        const mensaje =
-            document.getElementById("mensajeDocumentos");
-
-        if (mensaje) {
-
-            mensaje.textContent =
-                "Error: " +
-                resultados[2].reason.message;
-
-        }
-
+    conectarFormulario("formIniciarSesion", "mensajeLogin", async form => {
+        const resultado = await enviarAPI("iniciarSesion", Object.fromEntries(new FormData(form)));
+        form.reset();
+        mostrarSesion(resultado.usuario, resultado.token);
+        $("estadoSesion").textContent = "Sesión iniciada";
+    });
+    $("cerrarSesion").addEventListener("click", async () => {
+        $("cerrarSesion").disabled = true;
+        try {
+            await enviarAPI("cerrarSesion");
+            mostrarSesion(null, "");
+            $("mensajeLogin").textContent = "Sesión cerrada";
+        } catch (error) { $("estadoSesion").textContent = error.message; }
+        finally { $("cerrarSesion").disabled = false; }
+    });
+    conectarFormulario("formReportar", "mensajeRegistro", async form => {
+        const resultado = await enviarAPI("agregarDocumento", Object.fromEntries(new FormData(form)));
+        form.reset();
+        $("mensajeRegistro").textContent = "Documento guardado: " + resultado.IDDocumento;
+        await actualizarDatos();
+    });
+    conectarFormulario("formReclamo", "mensajeReclamo", async form => {
+        const resultado = await enviarAPI("agregarReclamo", Object.fromEntries(new FormData(form)));
+        form.reset();
+        $("nombreSolicitante").value = usuario.Nombre;
+        $("mensajeReclamo").textContent = "Reclamo guardado: " + resultado.IDReclamo + ". Estado: Pendiente";
+        await actualizarDatos();
+    });
+    $("actualizarReclamos").addEventListener("click", async () => {
+        $("actualizarReclamos").disabled = true;
+        try { await cargarDocumentos(); }
+        catch (error) { $("mensajeReclamo").textContent = error.message; }
+        finally { $("actualizarReclamos").disabled = false; }
+    });
+    $("formBuscar").addEventListener("submit", evento => {
+        evento.preventDefault();
+        const nombre = $("buscarNombre").value.trim().toLowerCase();
+        const numero = $("buscarNumero").value.trim();
+        const zona = $("buscarZona").value;
+        mostrarDocumentos(documentos.filter(d => String(d.NombreVisible || "").toLowerCase().includes(nombre)
+            && String(d.NumeroDocumento || "").includes(numero) && (!zona || d.Zona === zona)));
+    });
+    if (token) {
+        try { const resultado = await enviarAPI("miSesion"); mostrarSesion(resultado.usuario, token); }
+        catch (error) { mostrarSesion(null, ""); $("mensajeLogin").textContent = error.message; }
     }
-
-    // Mostrar error de zonas
-
-    if (resultados[1].status === "rejected") {
-
-        const zonaReporte =
-            document.getElementById("zonaReporte");
-
-        if (zonaReporte) {
-
-            zonaReporte.innerHTML =
-                '<option value="">Error al cargar zonas</option>';
-
-        }
-
-        console.error(
-            "No se pudieron cargar las zonas."
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// 9. EJECUTAR CUANDO CARGUE EL HTML
-// ==========================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    iniciar
-);
+    await actualizarDatos();
+});
