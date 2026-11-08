@@ -18,12 +18,172 @@
     </header>
 
     <nav>
+        <a href="#iniciarSesion">Iniciar sesión</a>
+        <a href="#crearUsuario">Crear cuenta</a>
         <a href="#inicio">Inicio</a>
         <a href="#documentos">Documentos</a>
         <a href="#buscar">Buscar</a>
         <a href="#reportar">Reportar documento</a>
         <a href="#reclamos">Reclamos</a>
     </nav>
+
+    <!-- INICIAR SESIÓN -->
+<section id="iniciarSesion">
+    <h2>Iniciar sesión</h2>
+
+    <form id="formIniciarSesion">
+        <label for="correoLogin">Correo electrónico:</label>
+        <input
+            type="email"
+            id="correoLogin"
+            name="correo"
+            autocomplete="username"
+            maxlength="254"
+            required
+        >
+
+        <br><br>
+
+        <label for="claveLogin">Contraseña:</label>
+        <input
+            type="password"
+            id="claveLogin"
+            name="clave"
+            autocomplete="current-password"
+            required
+        >
+
+        <br><br>
+
+        <button type="submit">Iniciar sesión</button>
+
+        <p>
+            ¿No tienes cuenta?
+            <a href="#crearUsuario">Crear una cuenta</a>
+        </p>
+    </form>
+
+    <p id="mensajeLogin" role="status" aria-live="polite"></p>
+</section>
+
+    <!-- CREAR USUARIO -->
+    <section id="crearUsuario">
+        <h2>Crear una cuenta</h2>
+    
+        <form id="formCrearUsuario">
+            <label for="nombreUsuario">Nombre completo:</label>
+            <input
+                type="text"
+                id="nombreUsuario"
+                name="Nombre"
+                autocomplete="name"
+                maxlength="120"
+                required
+            >
+    
+            <br><br>
+    
+            <label for="correoUsuario">Correo electrónico:</label>
+            <input
+                type="email"
+                id="correoUsuario"
+                name="Correo"
+                autocomplete="email"
+                maxlength="254"
+                required
+            >
+    
+            <br><br>
+    
+            <label for="telefonoUsuario">Teléfono:</label>
+            <input
+                type="tel"
+                id="telefonoUsuario"
+                name="Telefono"
+                autocomplete="tel"
+                maxlength="25"
+                required
+            >
+    
+            <br><br>
+    
+            <label for="claveUsuario">Contraseña:</label>
+            <input
+                type="password"
+                id="claveUsuario"
+                name="clave"
+                autocomplete="new-password"
+                minlength="12"
+                aria-describedby="ayudaClave"
+                required
+            >
+            <p id="ayudaClave">Utiliza al menos 12 caracteres.</p>
+    
+            <label for="confirmarClave">Confirmar contraseña:</label>
+            <input
+                type="password"
+                id="confirmarClave"
+                name="confirmacion"
+                autocomplete="new-password"
+                minlength="12"
+                required
+            >
+    
+            <br><br>
+    
+            <button type="submit">Crear cuenta</button>
+    
+            <p>
+                ¿Ya tienes cuenta?
+                <a href="#iniciarSesion">Iniciar sesión</a>
+            </p>
+        </form>
+    
+        <p id="mensajeUsuario" role="status" aria-live="polite"></p>
+    </section>
+    
+    <script>
+        // Interfaz preparada para conectar la autenticación.
+        // Evita enviar contraseñas hasta configurar ese servicio.
+    
+        document.getElementById("formIniciarSesion")
+            .addEventListener("submit", function (evento) {
+                evento.preventDefault();
+    
+                document.getElementById("mensajeLogin").textContent =
+                    "El inicio de sesión aún requiere conectar " +
+                    "el servicio de autenticación.";
+            });
+    
+        const claveNueva = document.getElementById("claveUsuario");
+        const confirmacion = document.getElementById("confirmarClave");
+    
+        function validarConfirmacion() {
+            confirmacion.setCustomValidity(
+                claveNueva.value === confirmacion.value
+                    ? ""
+                    : "Las contraseñas no coinciden."
+            );
+        }
+    
+        claveNueva.addEventListener("input", validarConfirmacion);
+        confirmacion.addEventListener("input", validarConfirmacion);
+    
+        document.getElementById("formCrearUsuario")
+            .addEventListener("submit", function (evento) {
+                evento.preventDefault();
+    
+                validarConfirmacion();
+    
+                if (!this.reportValidity()) {
+                    return;
+                }
+    
+                document.getElementById("mensajeUsuario").textContent =
+                    "El registro aún requiere conectar " +
+                    "el servicio de autenticación. No se creó ninguna cuenta.";
+            });
+    </script>
 
     <main>
 
