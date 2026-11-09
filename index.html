@@ -230,109 +230,79 @@
             <p id="mensajeDocumentos"></p>
         </section>
 
+
         <section id="reportar">
             <h2>Reportar documento encontrado</h2>
-
+        
             <p class="avisoSesion">
                 Inicia sesión para registrar documentos.
             </p>
-
+        
             <form id="formReportar">
                 <fieldset id="camposReporte" disabled>
                     <legend>Datos del documento</legend>
-
-                    <label for="tipoDocumento">
-                        Tipo de documento:
-                    </label>
-
-                    <select
-                        id="tipoDocumento"
-                        name="TipoDocumento"
-                        required
-                    >
+        
+                    <label for="tipoDocumento">Tipo de documento:</label>
+                    <select id="tipoDocumento" name="TipoDocumento" required>
                         <option value="">Seleccionar</option>
                         <option value="Cédula">Cédula</option>
-                        <option value="Licencia de conducir">
-                            Licencia de conducir
-                        </option>
+                        <option value="Licencia de conducir">Licencia de conducir</option>
                         <option value="Otro">Otro</option>
                     </select>
-
+        
                     <br><br>
-
+        
                     <label for="nombreVisible">Nombre visible:</label>
-                    <input
-                        type="text"
-                        id="nombreVisible"
-                        name="NombreVisible"
-                        maxlength="120"
-                        required
-                    >
-
+                    <input type="text" id="nombreVisible" name="NombreVisible" maxlength="120" required>
+        
                     <br><br>
-
-                    <label for="numeroDocumento">
-                        Últimos 4 dígitos:
-                    </label>
-                    <input
-                        type="text"
-                        id="numeroDocumento"
-                        name="NumeroDocumento"
-                        maxlength="4"
-                        pattern="[0-9]{1,4}"
-                        inputmode="numeric"
-                    >
-
+        
+                    <label for="numeroDocumento">Últimos 4 dígitos:</label>
+                    <input type="text" id="numeroDocumento" name="NumeroDocumento"
+                        maxlength="4" pattern="[0-9]{1,4}" inputmode="numeric" required>
+        
                     <br><br>
-
+        
                     <label for="zonaReporte">Zona:</label>
                     <select id="zonaReporte" name="Zona" required>
                         <option value="">Seleccionar zona</option>
                     </select>
-
+        
                     <br><br>
-
-                    <label for="fechaHallazgo">
-                        Fecha del hallazgo:
-                    </label>
-                    <input
-                        type="date"
-                        id="fechaHallazgo"
-                        name="FechaHallazgo"
-                    >
-
+        
+                    <label for="fechaHallazgo">Fecha del hallazgo:</label>
+                    <input type="date" id="fechaHallazgo" name="FechaHallazgo" required>
+        
                     <br><br>
-
-                    <label for="lugarHallazgo">
-                        Lugar donde fue encontrado:
-                    </label>
-                    <input
-                        type="text"
-                        id="lugarHallazgo"
-                        name="LugarHallazgo"
-                        maxlength="200"
-                        required
-                    >
-
+        
+                    <label for="lugarHallazgo">Lugar donde fue encontrado:</label>
+                    <input type="text" id="lugarHallazgo" name="LugarHallazgo"
+                        maxlength="200" required>
+        
                     <br><br>
-
+        
                     <label for="descripcion">Descripción:</label>
-                    <textarea
-                        id="descripcion"
-                        name="Descripcion"
-                        maxlength="1000"
-                    ></textarea>
-
+                    <textarea id="descripcion" name="Descripcion" maxlength="1000"></textarea>
+        
                     <br><br>
-
-                    <button type="submit">
-                        Registrar documento
-                    </button>
+        
+                    <label for="imagenDocumento">Fotografía del documento:</label>
+                    <input type="file" id="imagenDocumento" accept="image/jpeg,image/png">
+        
+                    <p>Formatos JPG y PNG. Tamaño máximo: 5 MB.</p>
+        
+                    <img id="vistaPreviaImagen" alt="Vista previa de la fotografía"
+                        hidden style="max-width:250px;max-height:250px;object-fit:contain;">
+        
+                    <br><br>
+        
+                    <button type="submit">Registrar documento</button>
                 </fieldset>
             </form>
-
+        
             <p id="mensajeRegistro" role="status" aria-live="polite"></p>
         </section>
+
 
         <section id="reclamos">
             <h2>Reclamar documento</h2>
