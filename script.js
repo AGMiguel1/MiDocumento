@@ -1,5 +1,5 @@
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzEIrr2688zNOBkBBuCk3Hcd_n1DHs_kydxE7ue-AkAEk4_7Z1pFaZULWNqj0QmPP9V/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxCoAb7urrivWxOGgsOdBTYhMhOyDtGFyI5PhjoLhECaK8lj8j0E3LkoCbVq5X1svlI/exec";
 
 let documentos = [];
 let token = sessionStorage.getItem("docuSesion") || "";
