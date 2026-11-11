@@ -1,76 +1,62 @@
-// Coloca la URL de tu implementación terminada en /exec
+// PEGA AQUÍ LA NUEVA URL /exec QUE TE DIO APPS SCRIPT
 const API_URL = "https://script.google.com/macros/s/AKfycbyqsawAdg4B-vBNWdmEB3jWNP_gU70dU7xGQZxA1Kznsi7KCxbOqADGwLP3gK-AqP5z/exec";
 
 let documentos = [];
 let token = sessionStorage.getItem("docuSesion") || "";
 let usuario = null;
-let contador = 0;
 
 const $ = id => document.getElementById(id);
 
-// ===== CONSULTAR API VIA JSONP =====
-function llamarAPI(accion, extras = {}) {
-  return new Promise((resolve, reject) => {
-    const callback = "cb_" + Date.now() + "_" + (++contador);
-    const script = document.createElement("script");
-
-    const timer = setTimeout(() => {
-      terminar(new Error("Tiempo de espera agotado al conectar con el servidor"));
-    }, 20000);
-
-    function terminar(error, resultado) {
-      clearTimeout(timer);
-      if (script.parentNode) script.remove();
-      window[callback] = () => {};
-      setTimeout(() => delete window[callback], 30000);
-
-      if (error) reject(error);
-      else resolve(resultado);
+// ===== LLAMADA UNIVERSAL CON FETCH (Sin bloqueos de AdBlock ni JSONP) =====
+async function llamarAPI(accion, extras = {}, usarPost = false) {
+  let respuesta;
+  try {
+    if (usarPost) {
+      respuesta = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ accion, token, ...extras })
+      });
+    } else {
+      const query = new URLSearchParams({ accion, ...extras });
+      respuesta = await fetch(API_URL + "?" + query.toString());
     }
+  } catch (err) {
+    throw new Error("Bloqueo de red o URL inválida. Verifica tu URL /exec o desactiva AdBlock.");
+  }
 
-    window[callback] = respuesta => {
-      if (!respuesta) {
-        terminar(new Error("Respuesta vacía del servidor"));
-      } else if (respuesta.estado === "error") {
-        terminar(new Error(respuesta.mensaje || "Error desconocido en el servidor"));
-      } else {
-        terminar(null, respuesta.datos);
-      }
-    };
+  const texto = await respuesta.text();
+  let json;
+  try {
+    json = JSON.parse(texto);
+  } catch (err) {
+    throw new Error("Apps Script devolvió una pantalla de login en vez de datos. Revisa que el acceso esté en 'Cualquier usuario'.");
+  }
 
-    script.onerror = () => {
-      terminar(new Error("No se pudo conectar con Apps Script. Verifica la URL y los permisos."));
-    };
+  if (json.estado === "error") {
+    throw new Error(json.mensaje || "Error en el servidor");
+  }
 
-    const query = new URLSearchParams({
-      accion,
-      callback,
-      ...extras
-    });
-
-    script.src = API_URL + "?" + query.toString();
-    document.body.appendChild(script);
-  });
+  return json.datos;
 }
 
-// ===== CONVERTIR IMAGEN A BASE64 =====
+// ===== IMÁGENES =====
 function convertirImagenBase64(archivo) {
   return new Promise((resolve, reject) => {
     const lector = new FileReader();
     lector.onload = () => resolve(lector.result.split(",")[1]);
-    lector.onerror = () => reject(new Error("No se pudo procesar la fotografía"));
+    lector.onerror = () => reject(new Error("No se pudo leer la imagen"));
     lector.readAsDataURL(archivo);
   });
 }
 
 function validarImagen(archivo) {
   if (!archivo) return true;
-  const formatos = ["image/jpeg", "image/png"];
-  if (!formatos.includes(archivo.type)) {
-    throw new Error("Solo se permiten fotografías en formato JPG o PNG");
+  if (!["image/jpeg", "image/png"].includes(archivo.type)) {
+    throw new Error("Solo se permiten imágenes JPG y PNG");
   }
-  if (archivo.size > 2 * 1024 * 1024) {
-    throw new Error("La fotografía no puede exceder los 2 MB");
+  if (archivo.size > 5 * 1024 * 1024) {
+    throw new Error("La imagen no puede superar los 5 MB");
   }
   return true;
 }
@@ -129,8 +115,7 @@ function mostrarSesion(perfil, nuevoToken) {
   $("nombreSolicitante").value = perfil ? perfil.Nombre : "";
 
   ["camposReporte", "camposReclamo"].forEach(id => {
-    const el = $(id);
-    if (el) el.disabled = !perfil;
+    if ($(id)) $(id).disabled = !perfil;
   });
 
   document.querySelectorAll(".avisoSesion").forEach(el => {
@@ -138,7 +123,7 @@ function mostrarSesion(perfil, nuevoToken) {
   });
 }
 
-// ===== DASHBOARD Y LISTADOS =====
+// ===== CARGA DE DATOS =====
 async function cargarDashboard() {
   const datos = await llamarAPI("dashboard");
   const mapeo = {
@@ -148,7 +133,7 @@ async function cargarDashboard() {
     totalZonas: "zonasRegistradas"
   };
   Object.entries(mapeo).forEach(([id, clave]) => {
-    if ($(id)) $(id).textContent = datos[clave] !== undefined ? datos[clave] : 0;
+    if ($(id)) $(id).textContent = datos[clave] ?? 0;
   });
 }
 
@@ -171,11 +156,9 @@ function disponible(doc) {
 function mostrarDocumentos(lista) {
   const tabla = $("tablaDocumentos");
   tabla.replaceChildren();
-
   $("mensajeDocumentos").textContent = lista.length ? "" : "No se encontraron documentos";
 
   const campos = ["IDDocumento", "TipoDocumento", "NombreVisible", "NumeroDocumento", "Zona", "Estado"];
-
   lista.forEach(doc => {
     const fila = document.createElement("tr");
     campos.forEach(c => {
@@ -213,11 +196,10 @@ async function actualizarDatos() {
 
   const fallos = res.filter(r => r.status === "rejected");
   $("estadoCarga").textContent = fallos.length
-    ? "Error al actualizar datos: " + fallos.map(f => f.reason.message).join(". ")
+    ? "Error: " + fallos[0].reason.message
     : "";
 }
 
-// ===== MANEJADOR DE FORMULARIOS =====
 function conectarFormulario(id, mensajeId, trabajo) {
   const form = $(id);
   if (!form) return;
@@ -248,7 +230,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   configurarImagen();
   mostrarSesion(null, token);
 
-  // Validación de clave
   const validarClave = () => {
     $("confirmarClave").setCustomValidity(
       $("claveUsuario").value === $("confirmarClave").value ? "" : "Las contraseñas no coinciden"
@@ -257,36 +238,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("claveUsuario").addEventListener("input", validarClave);
   $("confirmarClave").addEventListener("input", validarClave);
 
-  // Registro de usuario
   conectarFormulario("formCrearUsuario", "mensajeUsuario", async form => {
     validarClave();
     if (!form.reportValidity()) return;
-
     const datos = Object.fromEntries(new FormData(form));
     delete datos.confirmacion;
 
-    const res = await llamarAPI("agregarUsuario", datos);
+    const res = await llamarAPI("agregarUsuario", datos, true);
     form.reset();
     $("confirmarClave").setCustomValidity("");
     mostrarSesion(res.usuario, res.token);
-    $("estadoSesion").textContent = "Cuenta registrada con éxito";
+    $("estadoSesion").textContent = "Cuenta creada e inicio de sesión confirmado";
   });
 
-  // Login
   conectarFormulario("formIniciarSesion", "mensajeLogin", async form => {
-    const res = await llamarAPI("iniciarSesion", Object.fromEntries(new FormData(form)));
+    const res = await llamarAPI("iniciarSesion", Object.fromEntries(new FormData(form)), true);
     form.reset();
     mostrarSesion(res.usuario, res.token);
-    $("estadoSesion").textContent = "Sesión iniciada correctamente";
+    $("estadoSesion").textContent = "Sesión iniciada";
   });
 
-  // Logout
   $("cerrarSesion").addEventListener("click", () => {
     mostrarSesion(null, "");
     $("mensajeLogin").textContent = "Sesión cerrada";
   });
 
-  // Reportar documento
   conectarFormulario("formReportar", "mensajeRegistro", async form => {
     const archivo = $("imagenDocumento").files[0];
     validarImagen(archivo);
@@ -297,23 +273,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       datos.imagenTipo = archivo.type;
     }
 
-    const res = await llamarAPI("agregarDocumento", datos);
+    const res = await llamarAPI("agregarDocumento", datos, true);
     form.reset();
     limpiarVistaPrevia();
-    $("mensajeRegistro").textContent = `Documento registrado: ${res.IDDocumento}`;
+    $("mensajeRegistro").textContent = "Documento guardado correctamente: " + res.IDDocumento;
     await actualizarDatos();
   });
 
-  // Reclamar documento
   conectarFormulario("formReclamo", "mensajeReclamo", async form => {
-    const res = await llamarAPI("agregarReclamo", Object.fromEntries(new FormData(form)));
+    const res = await llamarAPI("agregarReclamo", Object.fromEntries(new FormData(form)), true);
     form.reset();
     $("nombreSolicitante").value = usuario ? usuario.Nombre : "";
-    $("mensajeReclamo").textContent = `Reclamo guardado (${res.IDReclamo}) - Estado: Pendiente`;
+    $("mensajeReclamo").textContent = `Reclamo guardado: ${res.IDReclamo}. Estado: Pendiente`;
     await actualizarDatos();
   });
 
-  // Botón recargar reclamos
   $("actualizarReclamos").addEventListener("click", async () => {
     $("actualizarReclamos").disabled = true;
     try {
@@ -325,7 +299,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Buscador
   $("formBuscar").addEventListener("submit", e => {
     e.preventDefault();
     const nombre = $("buscarNombre").value.trim().toLowerCase();
@@ -341,6 +314,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   });
 
-  // Carga inicial
+  if (token) {
+    try {
+      const res = await llamarAPI("miSesion", { token }, true);
+      mostrarSesion(res.usuario, token);
+    } catch (err) {
+      mostrarSesion(null, "");
+    }
+  }
+
   await actualizarDatos();
 });
