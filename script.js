@@ -1,4 +1,4 @@
-// PEGA AQUÍ LA NUEVA URL /exec QUE TE DIO APPS SCRIPT
+
 const API_URL = "https://script.google.com/macros/s/AKfycbyqsawAdg4B-vBNWdmEB3jWNP_gU70dU7xGQZxA1Kznsi7KCxbOqADGwLP3gK-AqP5z/exec";
 
 let documentos = [];
