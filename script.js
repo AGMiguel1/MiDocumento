@@ -7,15 +7,23 @@ let usuario = null;
 
 const $ = id => document.getElementById(id);
 
+
+function generarSolicitud() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ===== LLAMADA UNIVERSAL CON FETCH (Sin bloqueos de AdBlock ni JSONP) =====
 async function llamarAPI(accion, extras = {}, usarPost = false) {
   let respuesta;
   try {
     if (usarPost) {
+    
       respuesta = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ accion, token, ...extras })
+        body: JSON.stringify({ accion, token, ...extras ,solicitud : generarSolicitud ()})
       });
     } else {
       const query = new URLSearchParams({ accion, ...extras });
