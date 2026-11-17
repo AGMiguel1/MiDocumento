@@ -3,21 +3,25 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>MiDocumento · Documentos extraviados en Cochabamba</title>
-    <meta name="description" content="Sistema web colaborativo para reportar, buscar y recuperar documentos de identidad extraviados en Cochabamba. Entrega solo al titular verificado.">
-    <meta name="theme-color" content="#F4EFE6">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23173B31'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%23F4EFE6' stroke-width='2'/%3E%3Cpath d='m12.5 16.2 2.4 2.4 4.8-5' fill='none' stroke='%23F4EFE6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <meta name="description" content="Plataforma colaborativa para reportar, buscar y recuperar documentos de identidad extraviados en Cochabamba. Entrega solo al titular verificado.">
+    <meta name="theme-color" content="#F3EFE7">
+    <meta property="og:title" content="MiDocumento">
+    <meta property="og:description" content="Reporta, busca y recupera documentos de identidad extraviados en Cochabamba.">
+    <meta property="og:image" content="https://i.imgur.com/RX0djVr.jpeg">
+    <link rel="icon" href="https://i.imgur.com/RX0djVr.jpeg">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/RX0djVr.jpeg">
     <script>document.documentElement.classList.add("js");</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body data-vista="app">
 
-    <!-- ===== Iconos (sprite SVG) ===== -->
+    <!-- ===== Iconos ===== -->
     <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
         <defs>
             <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
@@ -26,7 +30,6 @@
             <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
             <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
             <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></symbol>
-            <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
             <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
             <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
             <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
@@ -42,7 +45,16 @@
             <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></symbol>
             <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></symbol>
             <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17.2v.1"/></symbol>
+            <symbol id="i-car" viewBox="0 0 24 24"><path d="M3 15v-3l2-5h14l2 5v3z"/><path d="M3 15v3h3v-3M18 15v3h3v-3M5 12h14M7.5 15h.01M16.5 15h.01"/></symbol>
+            <symbol id="i-book" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1.5"/><circle cx="12" cy="10" r="3"/><path d="M9.5 16.5h5"/></symbol>
+            <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+            <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></symbol>
+            <symbol id="i-cap" viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5zM6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5M22 9v6"/></symbol>
+            <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+            <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></symbol>
+            <symbol id="i-guide" viewBox="0 0 24 24"><path d="M3 5.5C5 4.5 8 4.5 12 6.5c4-2 7-2 9-1V19c-2-1-5-1-9 1-4-2-7-2-9-1z"/><path d="M12 6.5V20"/></symbol>
             <symbol id="i-person" viewBox="0 0 64 80"><circle cx="32" cy="28" r="13" fill="currentColor" stroke="none"/><path d="M6 80c0-18 11-28 26-28s26 10 26 28z" fill="currentColor" stroke="none"/></symbol>
+            <symbol id="i-bolivia" viewBox="0 0 100 100"><path d="M18 8 40 12 52 6 64 14 60 26 82 34 80 48 90 60 78 64 72 80 62 78 56 92 40 90 32 76 20 70 6 52 16 38 8 28z" fill="currentColor" stroke="none"/></symbol>
         </defs>
     </svg>
 
@@ -52,28 +64,19 @@
     <!-- ===== Cabecera ===== -->
     <header class="top" id="top">
         <a class="brand" href="#inicio" aria-label="MiDocumento, inicio">
-            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-                <rect width="32" height="32" rx="9" fill="currentColor"/>
-                <circle cx="16" cy="16" r="8" fill="none" stroke="var(--paper)" stroke-width="2"/>
-                <path d="m12.5 16.2 2.4 2.4 4.8-5" fill="none" stroke="var(--paper)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Mi<b>Documento</b></span>
+            <img class="logo-img" src="https://i.imgur.com/RX0djVr.jpeg" alt="" width="40" height="40" referrerpolicy="no-referrer">
+            <span class="brand-txt">Mi<b>Documento</b></span>
         </a>
 
         <nav id="menu" aria-label="Principal">
-            <a href="#como">Cómo funciona</a>
             <a href="#buscar">Buscar</a>
-            <a href="#documentos">Documentos</a>
             <a href="#reportar">Reportar</a>
             <a href="#reclamos">Reclamar</a>
-            <a href="#garantias">Seguridad</a>
+            <a href="#guia" id="enlaceGuia">Guía de uso</a>
         </nav>
 
         <div class="top-acc">
-            <div id="accionesSesion" class="top-botones">
-                <button type="button" class="btn btn-ghost" id="btnIngresar" data-auth="login">Ingresar</button>
-                <button type="button" class="btn btn-solid" id="btnCrear" data-auth="registro">Crear cuenta</button>
-            </div>
+            <button type="button" class="btn btn-solid btn-sm" id="btnIngresar" data-auth="login">Acceder</button>
 
             <div id="sesionActual" class="sesion" hidden>
                 <span class="avatar" id="avatarSesion" aria-hidden="true"></span>
@@ -90,274 +93,165 @@
                 <svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg>
             </button>
         </div>
+        <i class="tricolor" aria-hidden="true"></i>
     </header>
     <p id="estadoSesion" class="sr-only" role="status" aria-live="polite"></p>
 
     <main id="principal">
 
-        <!-- ===== Inicio / Hero ===== -->
-        <section id="inicio" class="hero">
-            <div class="hero-txt">
-                <p class="eyebrow rv"><span class="punto"></span>Cochabamba · Bolivia</p>
-                <h1 class="rv" style="--d:.08s">Lo que perdiste,<br><em>alguien ya lo encontró.</em></h1>
-                <p class="lead rv" style="--d:.16s">
-                    MiDocumento reúne los documentos de identidad hallados en la ciudad
-                    y los devuelve <strong>solo a su titular verdadero</strong>.
-                    Sin intermediarios y con tus datos protegidos.
-                </p>
-                <div class="hero-cta rv" style="--d:.24s">
-                    <a class="btn btn-solid btn-lg" href="#buscar">
-                        Buscar mi documento
-                        <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
-                    </a>
-                    <a class="link-flecha" href="#reportar">Encontré un documento</a>
-                </div>
-            </div>
+        <!-- ================= VISTA: APLICACIÓN ================= -->
+        <div id="vistaApp">
 
-            <div class="hero-vis" aria-hidden="true">
-                <div class="stack" id="heroStack">
-                    <div class="idc t-cedula stack-1">
-                        <div class="idc-top"><span class="idc-kind">Cédula de identidad</span><span class="chip chip-ok"><i></i>Disponible</span></div>
-                        <div class="idc-body">
-                            <div class="idc-photo"><svg class="sil"><use href="#i-person"/></svg><span class="idc-lock"><svg class="ico"><use href="#i-lock"/></svg></span></div>
-                            <div class="idc-data">
-                                <strong class="idc-name">Datos protegidos</strong>
-                                <span class="idc-bar" style="width:86%"></span><span class="idc-bar" style="width:60%"></span>
-                                <span class="idc-num"><small>N.º</small> •••• ••••</span>
-                            </div>
-                        </div>
-                        <div class="idc-foot"><span><svg class="ico"><use href="#i-pin"/></svg>Cercado</span><span><svg class="ico"><use href="#i-cal"/></svg>Hoy</span></div>
-                    </div>
-                    <div class="idc t-licencia stack-2">
-                        <div class="idc-top"><span class="idc-kind">Licencia de conducir</span><span class="chip chip-ok"><i></i>Disponible</span></div>
-                        <div class="idc-body">
-                            <div class="idc-photo"><svg class="sil"><use href="#i-person"/></svg><span class="idc-lock"><svg class="ico"><use href="#i-lock"/></svg></span></div>
-                            <div class="idc-data">
-                                <strong class="idc-name">Datos protegidos</strong>
-                                <span class="idc-bar" style="width:74%"></span><span class="idc-bar" style="width:52%"></span>
-                                <span class="idc-num"><small>N.º</small> •••• ••••</span>
-                            </div>
-                        </div>
-                        <div class="idc-foot"><span><svg class="ico"><use href="#i-pin"/></svg>Sarco</span><span><svg class="ico"><use href="#i-cal"/></svg>Ayer</span></div>
-                    </div>
-                    <div class="idc t-cedula stack-3 is-done">
-                        <div class="idc-top"><span class="idc-kind">Cédula de identidad</span><span class="chip chip-done"><i></i>Entregado</span></div>
-                        <div class="idc-body">
-                            <div class="idc-photo"><svg class="sil"><use href="#i-person"/></svg><span class="idc-lock"><svg class="ico"><use href="#i-lock"/></svg></span></div>
-                            <div class="idc-data">
-                                <strong class="idc-name">Datos protegidos</strong>
-                                <span class="idc-bar" style="width:80%"></span><span class="idc-bar" style="width:46%"></span>
-                                <span class="idc-num"><small>N.º</small> •••• ••••</span>
-                            </div>
-                        </div>
-                        <div class="idc-foot"><span><svg class="ico"><use href="#i-pin"/></svg>Cala Cala</span><span><svg class="ico"><use href="#i-cal"/></svg>Verificado</span></div>
-                        <span class="sello">Entregado</span>
-                    </div>
-                </div>
-            </div>
-
-            <a class="scroll-hint" href="#estadisticas" aria-label="Ir a las estadísticas">
-                <svg class="ico" aria-hidden="true"><use href="#i-down"/></svg>
-            </a>
-        </section>
-
-        <!-- ===== Estadísticas (dashboard) ===== -->
-        <section id="estadisticas" class="stats" aria-label="Resumen del sistema">
-            <div class="stats-in">
-                <div class="stat rv">
-                    <p class="stat-n" id="totalDocumentos" data-target="0">0</p>
-                    <p class="stat-l">Documentos encontrados</p>
-                </div>
-                <div class="stat rv" style="--d:.07s">
-                    <p class="stat-n" id="totalDisponibles" data-target="0">0</p>
-                    <p class="stat-l">Esperando a su titular</p>
-                </div>
-                <div class="stat rv" style="--d:.14s">
-                    <p class="stat-n" id="totalReclamados" data-target="0">0</p>
-                    <p class="stat-l">Devueltos a su dueño</p>
-                </div>
-                <div class="stat rv" style="--d:.21s">
-                    <p class="stat-n" id="totalZonas" data-target="0">0</p>
-                    <p class="stat-l">Zonas de Cochabamba</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== Cómo funciona ===== -->
-        <section id="como" class="sec como">
-            <div class="wrap">
-                <header class="sec-cab rv">
-                    <p class="eyebrow"><span class="punto"></span>Cómo funciona</p>
-                    <h2>Tres pasos, <em>una sola regla:</em><br>el documento vuelve a su dueño.</h2>
-                </header>
-
-                <ol class="pasos" id="pasos">
-                    <li class="paso rv">
-                        <span class="paso-n">01</span>
-                        <div>
-                            <h3>Alguien lo encuentra y lo reporta</h3>
-                            <p>Quien halla el documento lo registra con una foto, la zona y el lugar. Los datos que identifican al titular se guardan cifrados: nadie puede leerlos después, ni siquiera quien navega la plataforma.</p>
-                        </div>
-                        <svg class="ico ico-xl" aria-hidden="true"><use href="#i-filepl"/></svg>
-                    </li>
-                    <li class="paso rv">
-                        <span class="paso-n">02</span>
-                        <div>
-                            <h3>Tú lo buscas con filtros exactos</h3>
-                            <p>Filtra por nombre, últimos dígitos del número y zona. Solo verás datos parciales: un nombre abreviado, cuatro dígitos y el barrio donde fue hallado.</p>
-                        </div>
-                        <svg class="ico ico-xl" aria-hidden="true"><use href="#i-search"/></svg>
-                    </li>
-                    <li class="paso rv">
-                        <span class="paso-n">03</span>
-                        <div>
-                            <h3>Demuestras que es tuyo</h3>
-                            <p>Escribes el número completo y la fecha de nacimiento del titular. Si coinciden, se revela la fotografía y el contacto de quien lo encontró para coordinar la entrega. Si no, el documento sigue protegido.</p>
-                        </div>
-                        <svg class="ico ico-xl" aria-hidden="true"><use href="#i-shield"/></svg>
-                    </li>
-                </ol>
-            </div>
-        </section>
-
-        <!-- ===== Buscar ===== -->
-        <section id="buscar" class="sec buscar">
-            <div class="wrap">
-                <header class="sec-cab rv">
-                    <p class="eyebrow"><span class="punto"></span>Buscar</p>
-                    <h2>¿Perdiste tu carnet?<br><em>Empieza por aquí.</em></h2>
-                    <p class="sec-sub">Combina los filtros que recuerdes. La búsqueda compara el nombre completo, los últimos dígitos exactos y la zona.</p>
-                </header>
-
-                <form id="formBuscar" class="panel-busca rv" novalidate>
-                    <div class="campo">
-                        <label for="buscarNombre">Nombre del titular</label>
-                        <input type="text" id="buscarNombre" name="nombre" maxlength="120" autocomplete="off" placeholder="Ej. María Gutiérrez">
-                    </div>
-                    <div class="campo">
-                        <label for="buscarNumero">Últimos dígitos del documento</label>
-                        <input type="text" id="buscarNumero" name="ultimos" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="Ej. 4821">
-                    </div>
-                    <div class="campo">
-                        <label for="buscarZona">Zona</label>
-                        <select id="buscarZona" name="zona">
-                            <option value="">Todas las zonas</option>
-                        </select>
-                    </div>
-                    <div class="busca-acc">
-                        <button type="submit" class="btn btn-solid" id="btnBuscar">
+            <section id="inicio" class="hero">
+                <div class="hero-txt">
+                    <p class="eyebrow rv">Cochabamba · Bolivia</p>
+                    <h1 class="rv" style="--d:.06s">Documentos extraviados,<br>devueltos a su titular.</h1>
+                    <p class="lead rv" style="--d:.12s">Plataforma colaborativa para reportar, buscar y recuperar documentos de identidad, con verificación de titularidad.</p>
+                    <div class="hero-cta rv" style="--d:.18s">
+                        <a class="btn btn-solid btn-lg" href="#buscar">
                             <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>
-                            Buscar
-                        </button>
-                        <button type="button" class="btn btn-ghost" id="limpiarBusqueda">Limpiar</button>
+                            Buscar mi documento
+                        </a>
+                        <a class="btn btn-ghost btn-lg" href="#reportar">
+                            <svg class="ico" aria-hidden="true"><use href="#i-filepl"/></svg>
+                            Reportar un hallazgo
+                        </a>
                     </div>
-                </form>
-            </div>
-        </section>
+                    <a class="link-flecha rv" style="--d:.24s" href="#guia">Cómo funciona</a>
+                </div>
 
-        <!-- ===== Documentos ===== -->
-        <section id="documentos" class="sec documentos">
-            <div class="wrap">
-                <header class="docs-cab">
-                    <div>
-                        <p class="eyebrow"><span class="punto"></span>Documentos encontrados</p>
-                        <h2 id="tituloDocumentos">Todos los hallazgos</h2>
-                    </div>
-                    <p id="resumenResultados" class="resumen" role="status" aria-live="polite"></p>
-                </header>
+                <div class="hero-vis" aria-hidden="true">
+                    <div class="stack" id="heroStack"></div>
+                </div>
+            </section>
 
-                <p class="nota-priv">
-                    <svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg>
-                    Por seguridad, las fotografías y los datos completos permanecen ocultos hasta que el titular verifica su identidad.
-                </p>
+            <section id="estadisticas" class="stats" aria-label="Resumen del sistema">
+                <div class="stats-in">
+                    <div class="stat"><p class="stat-n" id="totalDocumentos" data-target="0">0</p><p class="stat-l">Documentos registrados</p></div>
+                    <div class="stat"><p class="stat-n" id="totalDisponibles" data-target="0">0</p><p class="stat-l">Esperando a su titular</p></div>
+                    <div class="stat"><p class="stat-n" id="totalReclamados" data-target="0">0</p><p class="stat-l">Entregados</p></div>
+                    <div class="stat"><p class="stat-n" id="totalZonas" data-target="0">0</p><p class="stat-l">Zonas cubiertas</p></div>
+                </div>
+            </section>
 
-                <p id="estadoCarga" class="estado" role="status" aria-live="polite" hidden></p>
-                <ul class="grid-docs" id="gridDocumentos" aria-live="polite"></ul>
-                <p id="mensajeDocumentos" class="vacio" hidden></p>
-            </div>
-        </section>
-
-        <!-- ===== Reportar ===== -->
-        <section id="reportar" class="sec reportar">
-            <div class="wrap dos-col">
-                <div class="col-form">
-                    <header class="sec-cab rv">
-                        <p class="eyebrow"><span class="punto"></span>Reportar</p>
-                        <h2>¿Encontraste<br>un documento?<br><em>Devuélvelo.</em></h2>
-                        <p class="sec-sub">Registra el hallazgo en un minuto. Necesitas una cuenta para que cada reporte tenga un responsable.</p>
+            <!-- Buscador + resultados -->
+            <section id="buscar" class="sec buscar">
+                <div class="wrap">
+                    <header class="sec-cab">
+                        <p class="eyebrow">Buscar</p>
+                        <h2>Encuentra tu documento</h2>
                     </header>
 
-                    <div class="aviso avisoSesion rv">
-                        <svg class="ico" aria-hidden="true"><use href="#i-key"/></svg>
-                        <p>Inicia sesión para registrar documentos.</p>
-                        <button type="button" class="btn btn-dark btn-sm" data-auth="login">Ingresar</button>
-                    </div>
+                    <form id="formBuscar" class="buscador" novalidate role="search" aria-label="Buscar documentos">
+                        <div class="busca-principal">
+                            <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>
+                            <label for="buscarNombre" class="sr-only">Nombre del titular</label>
+                            <input type="search" id="buscarNombre" name="nombre" maxlength="120" autocomplete="off" placeholder="Nombre y apellido del titular">
+                            <button type="submit" class="btn btn-solid" id="btnBuscar">Buscar</button>
+                        </div>
 
-                    <form id="formReportar" class="form-grande rv" novalidate>
-                        <fieldset id="camposReporte" disabled>
-                            <legend class="sr-only">Datos del documento hallado</legend>
+                        <div class="chips" id="chipsTipo" role="group" aria-label="Tipo de documento"></div>
 
-                            <div class="fila">
-                                <div class="campo">
-                                    <label for="tipoDocumento">Tipo de documento</label>
-                                    <select id="tipoDocumento" name="TipoDocumento" required>
-                                        <option value="">Seleccionar</option>
-                                        <option value="Cédula">Cédula de identidad</option>
-                                        <option value="Licencia de conducir">Licencia de conducir</option>
-                                        <option value="Otro">Otro documento</option>
-                                    </select>
-                                </div>
-                                <div class="campo">
-                                    <label for="zonaReporte">Zona del hallazgo</label>
-                                    <select id="zonaReporte" name="Zona" required>
-                                        <option value="">Seleccionar zona</option>
-                                    </select>
-                                </div>
-                            </div>
-
+                        <div class="filtros">
                             <div class="campo">
-                                <label for="nombreCompleto">Nombre completo del titular</label>
-                                <input type="text" id="nombreCompleto" name="NombreCompleto" maxlength="120" autocomplete="off" required>
-                                <p class="ayuda">En pantalla solo se mostrará abreviado, por ejemplo «María G.».</p>
+                                <label for="buscarNumero">Últimos 4 dígitos</label>
+                                <input type="text" id="buscarNumero" name="ultimos" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="0000">
                             </div>
-
-                            <div class="fila">
-                                <div class="campo">
-                                    <label for="numeroCompleto">Número completo del documento</label>
-                                    <input type="text" id="numeroCompleto" name="NumeroCompleto" maxlength="20" autocomplete="off" aria-describedby="ayudaNumero" required>
-                                    <p class="ayuda" id="ayudaNumero">Se guarda cifrado. Solo se muestran los últimos 4 dígitos.</p>
-                                </div>
-                                <div class="campo">
-                                    <label for="fechaNacimiento">Fecha de nacimiento del titular</label>
-                                    <input type="date" id="fechaNacimiento" name="FechaNacimiento" aria-describedby="ayudaNac" required>
-                                    <p class="ayuda" id="ayudaNac">Se guarda cifrada. Sirve para verificar al dueño.</p>
-                                </div>
+                            <div class="campo">
+                                <label for="buscarZona">Zona</label>
+                                <select id="buscarZona" name="zona"><option value="">Todas las zonas</option></select>
                             </div>
+                            <button type="button" class="btn btn-ghost" id="limpiarBusqueda">Limpiar filtros</button>
+                        </div>
+                    </form>
 
-                            <div class="fila">
+                    <div id="documentos" class="resultados">
+                        <header class="docs-cab">
+                            <h3 id="tituloDocumentos">Todos los hallazgos</h3>
+                            <p id="resumenResultados" class="resumen" role="status" aria-live="polite"></p>
+                        </header>
+                        <p class="nota-priv">
+                            <svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg>
+                            Las fotografías y los datos completos permanecen ocultos hasta verificar al titular.
+                        </p>
+                        <p id="estadoCarga" class="estado" role="status" aria-live="polite" hidden></p>
+                        <ul class="grid-docs" id="gridDocumentos" aria-live="polite"></ul>
+                        <p id="mensajeDocumentos" class="vacio" hidden></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reportar -->
+            <section id="reportar" class="sec reportar">
+                <div class="wrap dos-col">
+                    <div class="col-form">
+                        <header class="sec-cab">
+                            <p class="eyebrow">Reportar</p>
+                            <h2>Registrar un documento encontrado</h2>
+                        </header>
+
+                        <div class="aviso avisoSesion">
+                            <svg class="ico" aria-hidden="true"><use href="#i-key"/></svg>
+                            <p>Inicia sesión para registrar documentos.</p>
+                            <button type="button" class="btn btn-dark btn-sm" data-auth="login">Acceder</button>
+                        </div>
+
+                        <form id="formReportar" novalidate>
+                            <fieldset id="camposReporte" disabled>
+                                <legend class="paso-tit"><span>1</span>Tipo de documento</legend>
+                                <div class="tipos-grid" id="tiposReporte"></div>
+
+                                <p class="paso-tit"><span>2</span>Datos del documento</p>
+
                                 <div class="campo">
-                                    <label for="fechaHallazgo">Fecha del hallazgo</label>
-                                    <input type="date" id="fechaHallazgo" name="FechaHallazgo" required>
+                                    <label for="nombreCompleto">Nombre completo del titular</label>
+                                    <input type="text" id="nombreCompleto" name="NombreCompleto" maxlength="120" autocomplete="off" required>
+                                    <p class="ayuda">Se mostrará abreviado, por ejemplo «María G. L.».</p>
+                                </div>
+
+                                <div class="fila">
+                                    <div class="campo">
+                                        <label for="numeroCompleto" id="etqNumero">Número del documento</label>
+                                        <input type="text" id="numeroCompleto" name="NumeroCompleto" maxlength="20" autocomplete="off" aria-describedby="ayudaNumero" required>
+                                        <p class="ayuda" id="ayudaNumero">Se guarda cifrado. Solo se muestran los últimos 4 dígitos.</p>
+                                    </div>
+                                    <div class="campo">
+                                        <label for="fechaNacimiento">Fecha de nacimiento del titular</label>
+                                        <input type="date" id="fechaNacimiento" name="FechaNacimiento" aria-describedby="ayudaNac" required>
+                                        <p class="ayuda" id="ayudaNac">Se guarda cifrada. Sirve para verificar al dueño.</p>
+                                    </div>
+                                </div>
+
+                                <div class="fila" id="camposExtra"></div>
+
+                                <p class="paso-tit"><span>3</span>Hallazgo</p>
+
+                                <div class="fila">
+                                    <div class="campo">
+                                        <label for="zonaReporte">Zona</label>
+                                        <select id="zonaReporte" name="Zona" required><option value="">Seleccionar zona</option></select>
+                                    </div>
+                                    <div class="campo">
+                                        <label for="fechaHallazgo">Fecha del hallazgo</label>
+                                        <input type="date" id="fechaHallazgo" name="FechaHallazgo" required>
+                                    </div>
                                 </div>
                                 <div class="campo">
                                     <label for="lugarHallazgo">Lugar donde fue encontrado</label>
                                     <input type="text" id="lugarHallazgo" name="LugarHallazgo" maxlength="200" placeholder="Ej. Frente a la Plaza 14 de Septiembre" required>
                                 </div>
-                            </div>
+                                <div class="campo">
+                                    <label for="descripcion">Observaciones <span class="opc">(opcional)</span></label>
+                                    <textarea id="descripcion" name="Descripcion" maxlength="500" rows="2" placeholder="Estado del documento, dónde lo guardas…"></textarea>
+                                </div>
 
-                            <div class="campo">
-                                <label for="descripcion">Descripción <span class="opc">(opcional)</span></label>
-                                <textarea id="descripcion" name="Descripcion" maxlength="500" rows="3" placeholder="Estado del documento, cómo lo recibiste, dónde lo guardas…"></textarea>
-                            </div>
-
-                            <div class="campo">
-                                <span class="etq" id="etqFoto">Fotografía del documento</span>
+                                <p class="paso-tit"><span>4</span>Fotografía del documento</p>
                                 <label class="dropzone" id="dropzone" for="imagenDocumento">
                                     <input type="file" id="imagenDocumento" accept="image/jpeg,image/png" aria-describedby="ayudaFoto">
                                     <span class="dz-vacio" id="dzVacio">
                                         <svg class="ico ico-lg" aria-hidden="true"><use href="#i-camera"/></svg>
                                         <strong>Arrastra la foto o toca para elegirla</strong>
-                                        <small id="ayudaFoto">JPG o PNG, hasta 5 MB. La optimizamos automáticamente.</small>
+                                        <small id="ayudaFoto">JPG o PNG, hasta 5 MB. Se optimiza automáticamente.</small>
                                     </span>
                                     <span class="dz-prev" id="dzPrev" hidden>
                                         <img id="vistaPreviaImagen" alt="Vista previa de la fotografía" hidden>
@@ -367,156 +261,208 @@
                                         </span>
                                     </span>
                                 </label>
-                            </div>
 
-                            <button type="submit" class="btn btn-solid btn-lg btn-full">
-                                Registrar documento
-                                <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
-                            </button>
-                        </fieldset>
-                    </form>
+                                <button type="submit" class="btn btn-solid btn-lg btn-full" style="margin-top:24px">
+                                    Registrar documento
+                                    <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg>
+                                </button>
+                            </fieldset>
+                        </form>
+                        <p id="mensajeRegistro" class="estado" role="status" aria-live="polite"></p>
+                    </div>
 
-                    <p id="mensajeRegistro" class="estado" role="status" aria-live="polite"></p>
+                    <aside class="col-prev" aria-label="Vista previa del documento">
+                        <div class="sticky">
+                            <p class="prev-etq">Así se mostrará</p>
+                            <div id="vistaTarjeta"></div>
+                            <ul class="prev-notas">
+                                <li><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg>La foto nunca es pública.</li>
+                                <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>Número y nacimiento, solo cifrados.</li>
+                                <li><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>Tu contacto solo se entrega al titular verificado.</li>
+                            </ul>
+                        </div>
+                    </aside>
                 </div>
+            </section>
 
-                <aside class="col-prev" aria-label="Vista previa de la tarjeta">
-                    <div class="sticky">
-                        <p class="prev-etq">Así se verá en la plataforma</p>
-                        <div id="vistaTarjeta"></div>
-                        <ul class="prev-notas">
-                            <li><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg>La foto nunca se muestra públicamente.</li>
-                            <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>Número y fecha de nacimiento se guardan cifrados.</li>
-                            <li><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>Tu contacto solo se entrega al titular verificado.</li>
-                        </ul>
+            <!-- Reclamar -->
+            <section id="reclamos" class="sec reclamos">
+                <div class="wrap dos-col inv">
+                    <aside class="col-prev" aria-label="Documento seleccionado">
+                        <div class="sticky">
+                            <p class="prev-etq">Documento a reclamar</p>
+                            <div id="resumenReclamo"></div>
+                        </div>
+                    </aside>
+
+                    <div class="col-form">
+                        <header class="sec-cab">
+                            <p class="eyebrow">Reclamar</p>
+                            <h2>Verificar titularidad</h2>
+                            <p class="sec-sub">Escribe los datos tal como figuran en el documento. Tienes <strong>3 intentos</strong> por documento.</p>
+                        </header>
+
+                        <div class="aviso avisoSesion">
+                            <svg class="ico" aria-hidden="true"><use href="#i-key"/></svg>
+                            <p>Inicia sesión para reclamar un documento.</p>
+                            <button type="button" class="btn btn-dark btn-sm" data-auth="login">Acceder</button>
+                        </div>
+
+                        <form id="formReclamo" novalidate>
+                            <fieldset id="camposReclamo" disabled>
+                                <legend class="sr-only">Verificación de titularidad</legend>
+                                <div class="campo">
+                                    <label for="documentoReclamo">Documento</label>
+                                    <div class="con-boton">
+                                        <select id="documentoReclamo" name="IDDocumento" required><option value="">Cargando documentos…</option></select>
+                                        <button type="button" class="icon-btn borde" id="actualizarReclamos" aria-label="Actualizar lista" title="Actualizar">
+                                            <svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="campo">
+                                    <label for="numeroVerificacion" id="etqNumeroVer">Número completo del documento</label>
+                                    <input type="text" id="numeroVerificacion" name="NumeroCompleto" maxlength="20" autocomplete="off" required>
+                                </div>
+                                <div class="campo">
+                                    <label for="nacimientoVerificacion">Fecha de nacimiento del titular</label>
+                                    <input type="date" id="nacimientoVerificacion" name="FechaNacimiento" required>
+                                    <p class="ayuda">Los datos se comparan cifrados; nunca se muestran ni se guardan tal cual.</p>
+                                </div>
+                                <button type="submit" class="btn btn-solid btn-lg btn-full" id="enviarReclamo">
+                                    <svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>
+                                    Verificar y reclamar
+                                </button>
+                            </fieldset>
+                        </form>
+                        <p id="mensajeReclamo" class="estado" role="status" aria-live="polite"></p>
+
+                        <div id="listaVerificados" class="verificados" hidden>
+                            <h3>Tus documentos verificados</h3>
+                            <ul id="misVerificados"></ul>
+                        </div>
                     </div>
-                </aside>
-            </div>
-        </section>
+                </div>
+            </section>
 
-        <!-- ===== Reclamar ===== -->
-        <section id="reclamos" class="sec reclamos">
-            <div class="wrap dos-col inv">
-                <aside class="col-prev" aria-label="Documento seleccionado">
-                    <div class="sticky">
-                        <p class="prev-etq">Documento a reclamar</p>
-                        <div id="resumenReclamo"></div>
+            <section class="banda-guia">
+                <div class="wrap banda-in">
+                    <div>
+                        <h2>¿Primera vez aquí?</h2>
+                        <p>Consulta la guía con los pasos, los datos que se piden por documento y las medidas de seguridad.</p>
                     </div>
-                </aside>
+                    <a class="btn btn-dark btn-lg" href="#guia"><svg class="ico" aria-hidden="true"><use href="#i-guide"/></svg>Abrir la guía de uso</a>
+                </div>
+            </section>
+        </div>
 
-                <div class="col-form">
-                    <header class="sec-cab rv">
-                        <p class="eyebrow"><span class="punto"></span>Reclamar</p>
-                        <h2>Demuestra que<br><em>es tuyo.</em></h2>
-                        <p class="sec-sub">Escribe los datos del titular tal como figuran en el documento. Tienes <strong>3 intentos</strong> por documento.</p>
+        <!-- ================= VISTA: GUÍA ================= -->
+        <div id="vistaGuia" hidden>
+            <section class="guia">
+                <div class="wrap">
+                    <header class="guia-cab">
+                        <p class="eyebrow">Guía de uso</p>
+                        <h1>Todo lo que necesitas saber</h1>
+                        <p class="sec-sub">Elige tu caso. Cada pestaña termina con el botón que te lleva a la acción.</p>
                     </header>
 
-                    <div class="aviso avisoSesion rv">
-                        <svg class="ico" aria-hidden="true"><use href="#i-key"/></svg>
-                        <p>Inicia sesión para reclamar un documento.</p>
-                        <button type="button" class="btn btn-dark btn-sm" data-auth="login">Ingresar</button>
+                    <div class="g-tabs" role="tablist" aria-label="Secciones de la guía">
+                        <button type="button" role="tab" class="g-tab" id="gt-perdi" aria-controls="gp-perdi" aria-selected="true"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>Perdí mi documento</button>
+                        <button type="button" role="tab" class="g-tab" id="gt-encontre" aria-controls="gp-encontre" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-filepl"/></svg>Encontré uno</button>
+                        <button type="button" role="tab" class="g-tab" id="gt-docs" aria-controls="gp-docs" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-id"/></svg>Documentos y datos</button>
+                        <button type="button" role="tab" class="g-tab" id="gt-seguridad" aria-controls="gp-seguridad" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>Seguridad</button>
+                        <button type="button" role="tab" class="g-tab" id="gt-faq" aria-controls="gp-faq" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Preguntas</button>
                     </div>
 
-                    <form id="formReclamo" class="form-grande rv" novalidate>
-                        <fieldset id="camposReclamo" disabled>
-                            <legend class="sr-only">Verificación de titularidad</legend>
+                    <div class="g-panel" role="tabpanel" id="gp-perdi" aria-labelledby="gt-perdi">
+                        <ol class="g-pasos">
+                            <li><span>1</span><div><h3>Busca</h3><p>Escribe tu nombre, elige el tipo de documento y, si lo recuerdas, los últimos 4 dígitos y la zona.</p></div></li>
+                            <li><span>2</span><div><h3>Reconoce tu documento</h3><p>Verás una tarjeta con tu nombre abreviado, la zona y la fecha del hallazgo. La foto permanece oculta.</p></div></li>
+                            <li><span>3</span><div><h3>Verifica</h3><p>Inicia sesión y escribe el número completo y tu fecha de nacimiento. Tienes 3 intentos.</p></div></li>
+                            <li><span>4</span><div><h3>Coordina la entrega</h3><p>Si los datos coinciden, verás la foto y el contacto de quien lo encontró.</p></div></li>
+                        </ol>
+                        <div class="g-acc">
+                            <a class="btn btn-solid btn-lg" href="#buscar"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>Ir al buscador</a>
+                            <a class="btn btn-ghost btn-lg" href="#reclamos">Ir a verificar</a>
+                        </div>
+                    </div>
 
-                            <div class="campo">
-                                <label for="documentoReclamo">Documento</label>
-                                <div class="con-boton">
-                                    <select id="documentoReclamo" name="IDDocumento" required>
-                                        <option value="">Cargando documentos…</option>
-                                    </select>
-                                    <button type="button" class="icon-btn borde" id="actualizarReclamos" aria-label="Actualizar lista de documentos" title="Actualizar">
-                                        <svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg>
-                                    </button>
-                                </div>
+                    <div class="g-panel" role="tabpanel" id="gp-encontre" aria-labelledby="gt-encontre" hidden>
+                        <ol class="g-pasos">
+                            <li><span>1</span><div><h3>Crea una cuenta</h3><p>Cada reporte queda asociado a una persona responsable.</p></div></li>
+                            <li><span>2</span><div><h3>Elige el tipo y completa los datos</h3><p>El formulario cambia según el documento: número, nombre completo, fecha de nacimiento y datos propios de cada tipo.</p></div></li>
+                            <li><span>3</span><div><h3>Sube una fotografía</h3><p>Una imagen nítida del anverso. Se guarda en una carpeta privada y no es visible al público.</p></div></li>
+                            <li><span>4</span><div><h3>Espera el reclamo</h3><p>Resguarda el documento. Cuando el titular se verifique, recibirá tu contacto para coordinar.</p></div></li>
+                        </ol>
+                        <div class="g-acc">
+                            <a class="btn btn-solid btn-lg" href="#reportar"><svg class="ico" aria-hidden="true"><use href="#i-filepl"/></svg>Reportar un hallazgo</a>
+                        </div>
+                    </div>
+
+                    <div class="g-panel" role="tabpanel" id="gp-docs" aria-labelledby="gt-docs" hidden>
+                        <p class="g-intro">Estos son los documentos que admite el sistema y los datos que se solicitan en cada caso. Además siempre se pide el <strong>nombre completo</strong> y la <strong>fecha de nacimiento</strong> del titular.</p>
+                        <div class="tabla-wrap">
+                            <table class="tabla-tipos">
+                                <thead><tr><th scope="col">Documento</th><th scope="col">Se solicita</th><th scope="col">Se muestra públicamente</th></tr></thead>
+                                <tbody id="tablaTipos"></tbody>
+                            </table>
+                        </div>
+                        <div class="g-acc"><a class="btn btn-solid btn-lg" href="#reportar">Reportar un documento</a></div>
+                    </div>
+
+                    <div class="g-panel" role="tabpanel" id="gp-seguridad" aria-labelledby="gt-seguridad" hidden>
+                        <div class="gar-grid">
+                            <div class="gar-col">
+                                <h3><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>Visible para todos</h3>
+                                <ul><li>Nombre abreviado</li><li>Últimos 4 dígitos del número</li><li>Tipo de documento y datos de su cara pública</li><li>Zona y fecha del hallazgo</li></ul>
                             </div>
-
-                            <div class="campo">
-                                <label for="numeroVerificacion">Número completo del documento</label>
-                                <input type="text" id="numeroVerificacion" name="NumeroCompleto" maxlength="20" autocomplete="off" required>
+                            <div class="gar-col gar-oculto">
+                                <h3><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg>Siempre oculto</h3>
+                                <ul><li>Fotografía del documento</li><li>Nombre completo</li><li>Número completo y fecha de nacimiento <em>(solo cifrados)</em></li><li>Lugar exacto y contacto de quien lo halló</li></ul>
                             </div>
+                        </div>
+                        <ul class="reglas">
+                            <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg><div><strong>Hash con sal</strong><span>Los datos de verificación no pueden leerse ni recuperarse.</span></div></li>
+                            <li><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg><div><strong>3 intentos</strong><span>Tras tres fallos, el usuario queda bloqueado para ese documento.</span></div></li>
+                            <li><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><div><strong>Cuenta obligatoria</strong><span>Reportar y reclamar exige sesión. Cada intento queda registrado.</span></div></li>
+                            <li><svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg><div><strong>Entrega segura</strong><span>Coordina en un lugar público y lleva otra identificación.</span></div></li>
+                        </ul>
+                        <div class="g-acc"><a class="btn btn-solid btn-lg" href="#reclamos">Verificar un documento</a></div>
+                    </div>
 
-                            <div class="campo">
-                                <label for="nacimientoVerificacion">Fecha de nacimiento del titular</label>
-                                <input type="date" id="nacimientoVerificacion" name="FechaNacimiento" required>
-                                <p class="ayuda">Los datos se comparan cifrados. Nunca se muestran ni se guardan tal como los escribes.</p>
-                            </div>
-
-                            <button type="submit" class="btn btn-solid btn-lg btn-full" id="enviarReclamo">
-                                <svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>
-                                Verificar y reclamar
-                            </button>
-                        </fieldset>
-                    </form>
-
-                    <p id="mensajeReclamo" class="estado" role="status" aria-live="polite"></p>
-
-                    <div id="listaVerificados" class="verificados" hidden>
-                        <h3>Tus documentos verificados</h3>
-                        <ul id="misVerificados"></ul>
+                    <div class="g-panel" role="tabpanel" id="gp-faq" aria-labelledby="gt-faq" hidden>
+                        <div class="faq">
+                            <details><summary>¿Qué pasa si no recuerdo el número completo?</summary><p>Sin el número completo y la fecha de nacimiento no es posible verificar. Puedes buscar con el nombre y los últimos 4 dígitos, pero la entrega exige ambos datos.</p></details>
+                            <details><summary>¿Quién puede ver la fotografía?</summary><p>Solo quien supera la verificación de titularidad. Nadie más, ni siquiera en las listas públicas.</p></details>
+                            <details><summary>¿Cuántos intentos tengo?</summary><p>Tres por documento. Después, el sistema bloquea tu cuenta para ese documento.</p></details>
+                            <details><summary>¿Reemplaza a los trámites oficiales?</summary><p>No. MiDocumento facilita la devolución entre personas. No consulta SEGIP ni usa biometría; si no encuentras tu documento, debes tramitar la reposición ante la institución emisora.</p></details>
+                            <details><summary>¿Se puede usar fuera de Cochabamba?</summary><p>El sistema está pensado para Cochabamba y sus zonas cercanas, y está disponible solo en español.</p></details>
+                        </div>
+                        <div class="g-acc"><a class="btn btn-solid btn-lg" href="#buscar">Empezar a buscar</a></div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- ===== Garantías ===== -->
-        <section id="garantias" class="sec garantias">
-            <div class="wrap">
-                <header class="sec-cab rv">
-                    <p class="eyebrow"><span class="punto"></span>Seguridad</p>
-                    <h2>Visible lo justo.<br><em>Protegido todo lo demás.</em></h2>
-                </header>
-
-                <div class="gar-grid">
-                    <div class="gar-col rv">
-                        <h3><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>Lo que cualquiera ve</h3>
-                        <ul>
-                            <li>Nombre abreviado («María G.»)</li>
-                            <li>Últimos 4 dígitos del número</li>
-                            <li>Tipo de documento y zona</li>
-                            <li>Fecha del hallazgo</li>
-                        </ul>
-                    </div>
-                    <div class="gar-col gar-oculto rv" style="--d:.1s">
-                        <h3><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg>Lo que permanece oculto</h3>
-                        <ul>
-                            <li>Fotografía del documento</li>
-                            <li>Nombre completo</li>
-                            <li>Número completo y fecha de nacimiento <em>(solo cifrados)</em></li>
-                            <li>Lugar exacto y contacto de quien lo halló</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <ul class="reglas">
-                    <li class="rv"><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg><div><strong>Datos cifrados</strong><span>Número y fecha de nacimiento se guardan con hash salado, no como texto.</span></div></li>
-                    <li class="rv" style="--d:.07s"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg><div><strong>Máximo 3 intentos</strong><span>Tras tres fallos, ese usuario queda bloqueado para ese documento.</span></div></li>
-                    <li class="rv" style="--d:.14s"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><div><strong>Cuenta obligatoria</strong><span>Reportar y reclamar exige sesión: cada acción queda registrada.</span></div></li>
-                    <li class="rv" style="--d:.21s"><svg class="ico" aria-hidden="true"><use href="#i-id"/></svg><div><strong>Entrega con cuidado</strong><span>Coordina en un lugar público y lleva otra identificación de respaldo.</span></div></li>
-                </ul>
-            </div>
-        </section>
-
+            </section>
+        </div>
     </main>
 
     <!-- ===== Pie ===== -->
     <footer class="pie">
-        <div class="wrap">
-            <p class="pie-marca" aria-hidden="true">MiDocumento</p>
-            <div class="pie-fila">
-                <p>Sistema web colaborativo de documentos extraviados.</p>
-                <p>Desarrollado en Cochabamba, Bolivia · 2026</p>
-            </div>
+        <i class="tricolor" aria-hidden="true"></i>
+        <div class="wrap pie-in">
+            <a class="brand brand-pie" href="#inicio">
+                <img class="logo-img" src="https://i.imgur.com/RX0djVr.jpeg" alt="" width="32" height="32" referrerpolicy="no-referrer">
+                <span class="brand-txt">Mi<b>Documento</b></span>
+            </a>
+            <p>Sistema web colaborativo de documentos extraviados</p>
+            <p>Desarrollado en Cochabamba, Bolivia · 2026</p>
         </div>
     </footer>
 
     <!-- ===== Diálogo: sesión ===== -->
     <dialog id="dialogoAuth" class="dialogo" aria-labelledby="tituloAuth">
         <div class="dlg-in">
-            <button type="button" class="icon-btn dlg-x" data-cerrar aria-label="Cerrar">
-                <svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>
-            </button>
+            <button type="button" class="icon-btn dlg-x" data-cerrar aria-label="Cerrar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+            <img class="logo-img dlg-logo" src="https://i.imgur.com/RX0djVr.jpeg" alt="" width="52" height="52" referrerpolicy="no-referrer">
 
             <div class="tabs" role="tablist" aria-label="Acceso">
                 <button type="button" role="tab" id="tabLogin" class="tab" aria-selected="true" aria-controls="panelLogin" data-tab="login">Ingresar</button>
@@ -527,14 +473,8 @@
             <section id="panelLogin" role="tabpanel" aria-labelledby="tabLogin">
                 <h2 id="tituloAuth">Bienvenido de nuevo</h2>
                 <form id="formIniciarSesion" novalidate>
-                    <div class="campo">
-                        <label for="correoLogin">Correo electrónico</label>
-                        <input type="email" id="correoLogin" name="Correo" autocomplete="username" maxlength="254" required>
-                    </div>
-                    <div class="campo">
-                        <label for="claveLogin">Contraseña</label>
-                        <input type="password" id="claveLogin" name="Clave" autocomplete="current-password" required>
-                    </div>
+                    <div class="campo"><label for="correoLogin">Correo electrónico</label><input type="email" id="correoLogin" name="Correo" autocomplete="username" maxlength="254" required></div>
+                    <div class="campo"><label for="claveLogin">Contraseña</label><input type="password" id="claveLogin" name="Clave" autocomplete="current-password" required></div>
                     <button type="submit" class="btn btn-solid btn-lg btn-full">Iniciar sesión</button>
                     <p class="cambio">¿No tienes cuenta? <button type="button" class="link-btn" data-tab="registro">Crear una cuenta</button></p>
                 </form>
@@ -544,19 +484,10 @@
             <section id="panelRegistro" role="tabpanel" aria-labelledby="tabRegistro" hidden>
                 <h2>Crea tu cuenta</h2>
                 <form id="formCrearUsuario" novalidate>
-                    <div class="campo">
-                        <label for="nombreUsuario">Nombre completo</label>
-                        <input type="text" id="nombreUsuario" name="Nombre" autocomplete="name" maxlength="120" required>
-                    </div>
+                    <div class="campo"><label for="nombreUsuario">Nombre completo</label><input type="text" id="nombreUsuario" name="Nombre" autocomplete="name" maxlength="120" required></div>
                     <div class="fila">
-                        <div class="campo">
-                            <label for="correoUsuario">Correo electrónico</label>
-                            <input type="email" id="correoUsuario" name="Correo" autocomplete="email" maxlength="254" required>
-                        </div>
-                        <div class="campo">
-                            <label for="telefonoUsuario">Teléfono</label>
-                            <input type="tel" id="telefonoUsuario" name="Telefono" autocomplete="tel" maxlength="25" placeholder="7XXXXXXX" required>
-                        </div>
+                        <div class="campo"><label for="correoUsuario">Correo electrónico</label><input type="email" id="correoUsuario" name="Correo" autocomplete="email" maxlength="254" required></div>
+                        <div class="campo"><label for="telefonoUsuario">Teléfono</label><input type="tel" id="telefonoUsuario" name="Telefono" autocomplete="tel" maxlength="25" placeholder="7XXXXXXX" required></div>
                     </div>
                     <div class="campo">
                         <label for="claveUsuario">Contraseña</label>
@@ -564,10 +495,7 @@
                         <div class="fuerza" aria-hidden="true"><i id="fuerzaBarra"></i></div>
                         <p class="ayuda" id="ayudaClave">Usa al menos 12 caracteres.</p>
                     </div>
-                    <div class="campo">
-                        <label for="confirmarClave">Confirmar contraseña</label>
-                        <input type="password" id="confirmarClave" name="confirmacion" autocomplete="new-password" minlength="12" required>
-                    </div>
+                    <div class="campo"><label for="confirmarClave">Confirmar contraseña</label><input type="password" id="confirmarClave" name="confirmacion" autocomplete="new-password" minlength="12" required></div>
                     <button type="submit" class="btn btn-solid btn-lg btn-full">Crear cuenta</button>
                     <p class="cambio">¿Ya tienes cuenta? <button type="button" class="link-btn" data-tab="login">Iniciar sesión</button></p>
                 </form>
@@ -579,9 +507,7 @@
     <!-- ===== Diálogo: entrega verificada ===== -->
     <dialog id="dialogoEntrega" class="dialogo dialogo-ancho" aria-labelledby="tituloEntrega">
         <div class="dlg-in">
-            <button type="button" class="icon-btn dlg-x" data-cerrar aria-label="Cerrar">
-                <svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>
-            </button>
+            <button type="button" class="icon-btn dlg-x" data-cerrar aria-label="Cerrar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
             <div id="contenidoEntrega"></div>
         </div>
     </dialog>
