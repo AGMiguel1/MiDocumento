@@ -1,11 +1,12 @@
 "use strict";
 
 /* ==========================================================
-   MiDocumento — lógica del cliente
-   Frontend (HTML + CSS + JS) conectado a Google Apps Script,
-   que usa Google Sheets como base de datos y Drive para fotos.
+   MiDocumento — lógica del cliente (v3)
+   HTML + CSS + JS puros · Google Apps Script + Sheets + Drive
    ========================================================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbyvlsvqEEwByeF67KshJb9QL7aFBOaj8RYcKpfwQOLZMCm8pLJWdGd9RJ0Irf6Wp_I/exec";
+
+// URL de tu implementación de Apps Script (termina en /exec)
+const API_URL = "https://script.google.com/macros/s/AKfycbymStVu34f64kYyjvfNbBLoqPhLhV4ES774MQXtVkp6mOuBy1CTgn_iMgV4iwNaBHgl/exec";
 
 const CLAVE_SESION = "midocumento_sesion";
 const MAX_FOTO_MB = 5;
@@ -15,11 +16,13 @@ const $ = id => document.getElementById(id);
 const $$ = (sel, raiz = document) => Array.from(raiz.querySelectorAll(sel));
 const sinMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-let documentos = [];          // lista completa (datos públicos)
-let resultados = null;        // resultado de búsqueda activa (o null)
+let documentos = [];
+let resultados = null;
 let token = sessionStorage.getItem(CLAVE_SESION) || "";
 let usuario = null;
-let fotoLista = null;         // { base64, dataUrl, kb }
+let fotoLista = null;
+let tipoBusqueda = "";
+let ordenBusqueda = 0;
 
 /* ---------- Utilidades ---------- */
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -36,16 +39,56 @@ function hoyISO() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
-const TIPOS = { cedula: "Cédula de identidad", licencia: "Licencia de conducir", otro: "Otro documento" };
-function claseTipo(t) {
+/* ---------- Catálogo de documentos ---------- */
+const DEPARTAMENTOS = ["La Paz", "Cochabamba", "Santa Cruz", "Oruro", "Potosí", "Chuquisaca", "Tarija", "Beni", "Pando"];
+const SIGLAS = { "La Paz": "LP", "Cochabamba": "CB", "Santa Cruz": "SC", "Oruro": "OR", "Potosí": "PT", "Chuquisaca": "CH", "Tarija": "TJ", "Beni": "BN", "Pando": "PD" };
+
+// Debe coincidir con DETALLES en Code.gs
+const TIPOS = {
+    cedula: {
+        valor: "Cédula de identidad", corto: "Cédula", icono: "id", numero: "Número de cédula", ejemplo: "1234567",
+        extras: [{ k: "Expedido", label: "Expedida en", opts: DEPARTAMENTOS.map(d => [d, d]), req: true, publico: "departamento de expedición" }]
+    },
+    extranjero: {
+        valor: "Cédula de extranjero", corto: "Extranjero", icono: "globe", numero: "Número de cédula de extranjero", ejemplo: "1234567",
+        extras: [{ k: "Nacionalidad", label: "Nacionalidad", texto: true, req: true, publico: "nacionalidad" }]
+    },
+    licencia: {
+        valor: "Licencia de conducir", corto: "Licencia", icono: "car", numero: "Número de licencia", ejemplo: "4567890",
+        extras: [{ k: "Categoria", label: "Categoría", opts: [["M", "M · Motociclista"], ["P", "P · Particular"], ["A", "A · Profesional A"], ["B", "B · Profesional B"], ["C", "C · Profesional C"]], req: true, publico: "categoría" }]
+    },
+    pasaporte: {
+        valor: "Pasaporte", corto: "Pasaporte", icono: "book", numero: "Número de pasaporte", ejemplo: "9012345",
+        extras: [{ k: "Pais", label: "País emisor", texto: true, req: true, def: "Bolivia", publico: "país emisor" }]
+    },
+    libreta: {
+        valor: "Libreta de servicio militar", corto: "Libreta militar", icono: "star", numero: "Número de libreta", ejemplo: "045123",
+        extras: [{ k: "Clase", label: "Tipo de libreta", opts: ["Servicio militar", "Premilitar", "Auxiliar", "Inhábil", "Redención"].map(o => [o, o]), req: true, publico: "tipo de libreta" }]
+    },
+    universitario: {
+        valor: "Carnet universitario", corto: "Universitario", icono: "cap", numero: "Número de registro o matrícula", ejemplo: "2021145879",
+        extras: [{ k: "Institucion", label: "Universidad o instituto", texto: true, req: true, publico: "institución" }]
+    },
+    otro: {
+        valor: "Otro", corto: "Otro", icono: "file", numero: "Número del documento", ejemplo: "123456",
+        extras: [{ k: "Nombre", label: "¿Qué documento es?", texto: true, req: true, publico: "nombre del documento" }]
+    }
+};
+
+function claveTipo(t) {
     const n = norm(t);
+    if (n.includes("extranjer")) return "extranjero";
     if (n.includes("cedula")) return "cedula";
     if (n.includes("licencia")) return "licencia";
+    if (n.includes("pasaporte")) return "pasaporte";
+    if (n.includes("libreta") || n.includes("militar")) return "libreta";
+    if (n.includes("universit")) return "universitario";
     return "otro";
 }
 
-// Debe coincidir con la función del servidor (Code.gs)
+// Debe coincidir con el servidor (Code.gs)
 function enmascararNombre(nombre) {
     const p = String(nombre || "").trim().split(/\s+/).filter(Boolean);
     if (!p.length) return "";
@@ -62,11 +105,10 @@ function setMensaje(id, texto, tipo = "") {
 }
 
 function toast(texto, tipo = "ok") {
-    const caja = $("toasts");
     const el = document.createElement("div");
     el.className = "toast " + tipo;
     el.innerHTML = icono(tipo === "error" ? "alert" : "check") + `<span>${esc(texto)}</span>`;
-    caja.appendChild(el);
+    $("toasts").appendChild(el);
     setTimeout(() => {
         el.classList.add("sale");
         el.addEventListener("animationend", () => el.remove(), { once: true });
@@ -89,69 +131,150 @@ async function llamarAPI(accion, extras = {}, usarPost = false) {
     } catch (e) {
         throw new Error("No se pudo conectar con el servidor. Revisa tu conexión o la URL del Apps Script.");
     }
-
     const texto = await respuesta.text();
     let json;
-    try {
-        json = JSON.parse(texto);
-    } catch (e) {
+    try { json = JSON.parse(texto); } catch (e) {
         throw new Error("El servidor no devolvió datos. Publica el Apps Script como aplicación web con acceso para «Cualquier persona».");
     }
     if (json.estado !== "ok") throw new Error(json.mensaje || "Error en el servidor");
     return json.datos;
 }
 
-/* ---------- Tarjeta de identidad ---------- */
+/* ==========================================================
+   DOCUMENTOS: render de cada tipo como el documento real
+   ========================================================== */
 const SILUETA = `<svg class="sil" aria-hidden="true"><use href="#i-person"/></svg>`;
+const mk = w => `<i class="mk" style="--w:${w}cqw"></i>`;
+const campo = (etq, valor, cls = "") => `<div class="d-f ${cls}"><small>${etq}</small><b>${valor}</b></div>`;
+const fotoBloqueada = () => `<div class="d-foto">${SILUETA}<span class="lock">${icono("lock")}</span></div>`;
 
-function tarjeta(d, opciones = {}) {
-    const t = claseTipo(d.TipoDocumento);
-    const entregado = norm(d.Estado) === "reclamado";
-    const nombre = d.NombreVisible || opciones.nombreVacio || "Nombre del titular";
-    const num = d.Ultimos4 ? esc(d.Ultimos4) : "••••";
-    return `
-    <div class="idc t-${t}${entregado ? " is-done" : ""}" data-tilt>
-        <div class="idc-top">
-            <span class="idc-kind">${esc(TIPOS[t])}</span>
-            <span class="chip ${entregado ? "chip-done" : "chip-ok"}"><i></i>${entregado ? "Entregado" : "Disponible"}</span>
-        </div>
-        <div class="idc-body">
-            <div class="idc-photo" title="${d.TieneImagen ? "Fotografía protegida" : "Sin fotografía"}">${SILUETA}<span class="idc-lock">${icono("lock")}</span></div>
-            <div class="idc-data">
-                <strong class="idc-name">${esc(nombre)}</strong>
-                <span class="idc-bar" style="width:84%"></span>
-                <span class="idc-bar" style="width:56%"></span>
-                <span class="idc-num"><small>N.º</small> •••• ${num}</span>
+function partesNombre(visible) {
+    const p = String(visible || "").trim().split(/\s+/).filter(Boolean);
+    return { nombres: p[0] || "", apellidos: p.slice(1).join(" ") };
+}
+
+function codigoPais(pais) {
+    const n = norm(pais);
+    if (!n || n === "bolivia" || n.startsWith("boliv")) return "BOL";
+    return sinAcentos(pais).toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3).padEnd(3, "<");
+}
+
+function docHTML(d, clase = "") {
+    const k = claveTipo(d.TipoDocumento);
+    const det = d.Detalles || {};
+    const hecho = norm(d.Estado) === "reclamado";
+    const { nombres, apellidos } = partesNombre(d.NombreVisible);
+    const vN = nombres ? esc(nombres) : mk(22);
+    const vA = apellidos ? esc(apellidos) : mk(22);
+    const ult = String(d.Ultimos4 || "").replace(/\D/g, "").slice(-4);
+    const num = ult ? "••••" + esc(ult) : "•••••••";
+    const base = `doc doc-${{ cedula: "ci", extranjero: "ex", licencia: "lic", pasaporte: "pas", libreta: "sm", universitario: "uni", otro: "ot" }[k]}${hecho ? " is-done" : ""} ${clase}`;
+    const sello = hecho ? '<span class="d-stamp">Entregado</span>' : "";
+    const bandera = '<i class="d-flag"></i>';
+    let cuerpo = "";
+
+    switch (k) {
+        case "cedula": {
+            const sigla = SIGLAS[det.Expedido] || "";
+            cuerpo = `
+            <span class="ci-serie">${sigla ? "EXP. " + sigla : "0000001"}</span>
+            <div class="ci-head">${bandera}<div><b>ESTADO PLURINACIONAL DE BOLIVIA</b><span>SERVICIO GENERAL DE IDENTIFICACIÓN PERSONAL</span></div></div>
+            <div class="ci-titulo"><b>CÉDULA DE<br>IDENTIDAD</b><strong>N° ${num}</strong></div>
+            ${fotoBloqueada()}
+            <div class="ci-datos">
+                <div class="d-row">${campo("Serie:", mk(10))}${campo("Sección:", mk(10))}</div>
+                ${campo("Nombres:", vN)}${campo("Apellidos:", vA)}${campo("Fecha de nacimiento:", mk(20))}
+                <div class="d-row">${campo("Fecha de emisión:", mk(14))}${campo("Fecha de expiración:", mk(14))}</div>
             </div>
-        </div>
-        <div class="idc-foot">
-            <span>${icono("pin")}${esc(d.Zona || "Zona")}</span>
-            <span>${icono("cal")}${esc(fmtFecha(d.FechaHallazgo) || "Fecha")}</span>
-        </div>
-        ${entregado ? '<span class="sello">Entregado</span>' : ""}
-    </div>`;
+            <span class="ci-firma">FIRMA DEL TITULAR</span>
+            <svg class="ci-sello" viewBox="0 0 48 48" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="24" cy="24" r="22" stroke-width="1.4"/><circle cx="24" cy="24" r="16" stroke-width="1" stroke-dasharray="1.5 1.5"/><circle cx="24" cy="24" r="9" stroke-width="1.2"/><path d="M24 15v18M15 24h18M18 18l12 12M30 18 18 30" stroke-width=".8"/></svg>
+            <svg class="ci-mapa" aria-hidden="true"><use href="#i-bolivia"/></svg>`;
+            break;
+        }
+        case "extranjero":
+            cuerpo = `
+            <div class="ex-banda">${bandera}<div><b>ESTADO PLURINACIONAL DE BOLIVIA</b><span>CÉDULA DE IDENTIDAD DE EXTRANJERO</span></div></div>
+            ${fotoBloqueada()}
+            <div class="ex-datos">${campo("Nombres", vN)}${campo("Apellidos", vA)}${campo("Nacionalidad", det.Nacionalidad ? esc(det.Nacionalidad) : mk(18))}${campo("Fecha de nacimiento", mk(18))}</div>
+            <svg class="ico ex-mundo" aria-hidden="true"><use href="#i-globe"/></svg><i class="ex-holo"></i>
+            <span class="ex-num">N° ${num}</span>`;
+            break;
+        case "licencia":
+            cuerpo = `
+            <div class="lc-banda">${bandera}<div><b>ESTADO PLURINACIONAL DE BOLIVIA</b><span>LICENCIA PARA CONDUCIR</span></div></div>
+            ${fotoBloqueada()}
+            <div class="lc-datos">${campo("Nombres", vN)}${campo("Apellidos", vA)}${campo("Fecha de nacimiento", mk(18))}</div>
+            <span class="lc-num">N° ${num}</span>
+            <div class="lc-cat"><small>CAT.</small><b>${esc(det.Categoria || "–")}</b></div>
+            <svg class="ico lc-auto" aria-hidden="true"><use href="#i-car"/></svg><i class="lc-barras"></i>`;
+            break;
+        case "pasaporte": {
+            const pais = det.Pais || "Bolivia", cod = codigoPais(pais);
+            const apMRZ = sinAcentos(apellidos).toUpperCase().replace(/[^A-Z]/g, "") || "";
+            const noMRZ = sinAcentos(nombres).toUpperCase().replace(/[^A-Z]/g, "") || "";
+            const l1 = ("P<" + cod + apMRZ + "<<" + noMRZ).padEnd(36, "<").slice(0, 36);
+            const l2 = ("<".repeat(28) + (ult || "••••") + "<<<<").slice(-36);
+            cuerpo = `
+            <div class="ps-cab"><b>PASAPORTE</b><span>PASSPORT · ${esc(cod)}</span></div>
+            ${fotoBloqueada()}
+            <div class="ps-datos">
+                ${campo("Tipo / Type", "P")}${campo("N.º de pasaporte", num)}
+                ${campo("Apellidos y nombres", d.NombreVisible ? esc(d.NombreVisible) : mk(26), "ancho")}
+                ${campo("Nacionalidad", esc(pais))}${campo("Fecha de nacimiento", mk(16))}
+                ${campo("Lugar de nacimiento", mk(16))}${campo("Fecha de expiración", mk(16))}
+            </div>
+            <div class="ps-mrz">${esc(l1)}<br>${esc(l2)}</div>`;
+            break;
+        }
+        case "libreta":
+            cuerpo = `
+            <div class="sm-cab"><span class="sm-escudo">${icono("star")}</span><div><small>MINISTERIO DE DEFENSA</small><b>LIBRETA DE SERVICIO MILITAR</b></div></div>
+            <span class="sm-tipo">${esc(det.Clase || "Servicio militar")}</span>
+            ${fotoBloqueada()}
+            <div class="sm-datos">${campo("Nombres", vN)}${campo("Apellidos", vA)}${campo("N.º de libreta", num)}</div>
+            <i class="sm-cinta"></i>`;
+            break;
+        case "universitario":
+            cuerpo = `
+            <div class="un-banda"><b>${esc(det.Institucion || "Universidad")}</b><span>CARNET UNIVERSITARIO</span></div>
+            ${fotoBloqueada()}
+            <div class="un-datos">${campo("Nombres", vN)}${campo("Apellidos", vA)}${campo("Registro", num)}</div>
+            <i class="un-barras"></i><i class="un-acento"></i>`;
+            break;
+        default:
+            cuerpo = `
+            <div class="ot-cab">${bandera}<div><small>DOCUMENTO</small><b>${esc(det.Nombre || "Documento")}</b></div></div>
+            ${fotoBloqueada()}
+            <div class="ot-datos">${campo("Nombres", vN)}${campo("Apellidos", vA)}${campo("N.º", num)}</div>`;
+    }
+    return `<div class="${base}" data-tilt>${cuerpo}${sello}</div>`;
 }
 
-function esDisponible(d) {
-    return ["disponible", "encontrado"].includes(norm(d.Estado));
+/* ---------- Hero ---------- */
+function pintarHero() {
+    $("heroStack").innerHTML =
+        docHTML({ TipoDocumento: TIPOS.cedula.valor, Estado: "Disponible", Detalles: { Expedido: "Cochabamba" } }, "stack-1") +
+        docHTML({ TipoDocumento: TIPOS.licencia.valor, Estado: "Disponible", Detalles: { Categoria: "B" } }, "stack-2") +
+        docHTML({ TipoDocumento: TIPOS.pasaporte.valor, Estado: "Disponible", Detalles: { Pais: "Bolivia" } }, "stack-3");
 }
 
-/* ---------- Render de documentos ---------- */
+/* ---------- Lista de documentos ---------- */
+function esDisponible(d) { return ["disponible", "encontrado"].includes(norm(d.Estado)); }
+
 function pintarEsqueleto() {
     $("gridDocumentos").innerHTML = Array.from({ length: 6 }, () => '<li class="skel" aria-hidden="true"></li>').join("");
     $("mensajeDocumentos").hidden = true;
 }
 
 function mostrarDocumentos(lista, filtrado = false) {
-    const grid = $("gridDocumentos");
-    grid.innerHTML = lista.map((d, i) => `
+    $("gridDocumentos").innerHTML = lista.map((d, i) => `
         <li class="dcard rv" style="--d:${Math.min(i, 8) * 0.05}s">
-            ${tarjeta(d)}
+            ${docHTML(d)}
+            <div class="dcard-info"><span>${icono("pin")}${esc(d.Zona)}</span><span>${icono("cal")}${esc(fmtFecha(d.FechaHallazgo))}</span></div>
             <div class="dcard-pie">
+                ${esDisponible(d) ? '<span class="etq-estado"><i></i>Disponible</span>' : '<span class="etq-estado hecho"><i></i>Entregado</span>'}
                 <span class="dcard-id">${esc(d.IDDocumento)}</span>
-                ${esDisponible(d)
-                    ? `<button type="button" class="btn btn-dark" data-reclamar="${esc(d.IDDocumento)}">Es mío ${icono("arrow")}</button>`
-                    : `<span class="tag">${icono("check")}Ya fue entregado</span>`}
+                ${esDisponible(d) ? `<button type="button" class="btn btn-dark" data-reclamar="${esc(d.IDDocumento)}">Es mío ${icono("arrow")}</button>` : ""}
             </div>
         </li>`).join("");
 
@@ -159,14 +282,10 @@ function mostrarDocumentos(lista, filtrado = false) {
     vacio.hidden = lista.length > 0;
     vacio.textContent = filtrado
         ? "Ninguna coincidencia. Prueba con menos filtros o revisa la ortografía."
-        : "Todavía no hay documentos registrados. Sé el primero en reportar uno.";
-
+        : "Todavía no hay documentos registrados.";
     $("tituloDocumentos").textContent = filtrado ? "Coincidencias" : "Todos los hallazgos";
-    $("resumenResultados").textContent = filtrado
-        ? `${lista.length} ${lista.length === 1 ? "coincidencia" : "coincidencias"}`
-        : `${lista.length} ${lista.length === 1 ? "documento" : "documentos"}`;
-
-    observarReveal(grid);
+    $("resumenResultados").textContent = `${lista.length} ${filtrado ? (lista.length === 1 ? "coincidencia" : "coincidencias") : (lista.length === 1 ? "documento" : "documentos")}`;
+    observarReveal($("gridDocumentos"));
 }
 
 /* ---------- Carga de datos ---------- */
@@ -174,7 +293,7 @@ function contador(el, destino) {
     destino = Number(destino) || 0;
     el.dataset.target = destino;
     if (sinMovimiento || !el.dataset.visto) { el.textContent = destino; return; }
-    const inicio = Number(el.textContent) || 0, t0 = performance.now(), dur = 1300;
+    const inicio = Number(el.textContent) || 0, t0 = performance.now(), dur = 1200;
     const paso = t => {
         const p = Math.min(1, (t - t0) / dur), e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
         el.textContent = Math.round(inicio + (destino - inicio) * e);
@@ -192,14 +311,13 @@ async function cargarDashboard() {
 async function cargarZonas() {
     const datos = await llamarAPI("zonas");
     const llenar = (sel, primera) => {
+        const previo = sel.value;
         sel.replaceChildren(new Option(primera, ""));
         datos.forEach(z => z.Zona && sel.add(new Option(z.Zona, z.Zona)));
+        sel.value = previo;
     };
-    const valorBusca = $("buscarZona").value, valorRep = $("zonaReporte").value;
     llenar($("buscarZona"), "Todas las zonas");
     llenar($("zonaReporte"), "Seleccionar zona");
-    $("buscarZona").value = valorBusca;
-    $("zonaReporte").value = valorRep;
 }
 
 function llenarSelectReclamo() {
@@ -207,7 +325,7 @@ function llenarSelectReclamo() {
     const libres = documentos.filter(esDisponible);
     sel.replaceChildren(new Option(libres.length ? "Seleccionar documento" : "No hay documentos disponibles", ""));
     libres.forEach(d => {
-        const etq = [d.IDDocumento, TIPOS[claseTipo(d.TipoDocumento)], d.NombreVisible, d.Zona].filter(Boolean).join(" · ");
+        const etq = [d.IDDocumento, TIPOS[claveTipo(d.TipoDocumento)].corto, d.NombreVisible, d.Zona].filter(Boolean).join(" · ");
         sel.add(new Option(etq, d.IDDocumento));
     });
     if (libres.some(d => d.IDDocumento === previo)) sel.value = previo;
@@ -247,10 +365,9 @@ function mostrarSesion(perfil, nuevoToken) {
     if (token) sessionStorage.setItem(CLAVE_SESION, token); else sessionStorage.removeItem(CLAVE_SESION);
 
     $("sesionActual").hidden = !perfil;
-    $("accionesSesion").hidden = Boolean(perfil);
+    $("btnIngresar").hidden = Boolean(perfil);
     $("nombreSesion").textContent = perfil ? perfil.Nombre : "";
     $("avatarSesion").textContent = perfil ? iniciales(perfil.Nombre) : "";
-
     ["camposReporte", "camposReclamo"].forEach(id => { $(id).disabled = !perfil; });
     $$(".avisoSesion").forEach(el => { el.hidden = Boolean(perfil); });
 
@@ -263,14 +380,13 @@ function mostrarSesion(perfil, nuevoToken) {
 async function cargarVerificados() {
     try {
         const lista = await llamarAPI("misVerificados", {}, true);
-        const ul = $("misVerificados");
         $("listaVerificados").hidden = !lista.length;
-        ul.innerHTML = lista.map(d => `
+        $("misVerificados").innerHTML = lista.map(d => `
             <li>
-                <span>${esc(d.NombreVisible)} <small>${esc(d.IDDocumento)} · ${esc(TIPOS[claseTipo(d.TipoDocumento)])}</small></span>
+                <span>${esc(d.NombreVisible)} <small>${esc(d.IDDocumento)} · ${esc(TIPOS[claveTipo(d.TipoDocumento)].corto)}</small></span>
                 <button type="button" class="btn btn-ghost btn-sm" data-entrega="${esc(d.IDDocumento)}">Ver entrega</button>
             </li>`).join("");
-    } catch (e) { /* la lista es opcional */ }
+    } catch (e) { /* opcional */ }
 }
 
 /* ---------- Diálogos ---------- */
@@ -278,6 +394,7 @@ function abrirAuth(tab = "login") {
     cambiarTab(tab);
     const dlg = $("dialogoAuth");
     if (!dlg.open) dlg.showModal();
+    posicionarIndicador();
     setTimeout(() => $(tab === "login" ? "correoLogin" : "nombreUsuario").focus(), 60);
 }
 
@@ -302,10 +419,9 @@ function posicionarIndicador() {
 
 function configurarDialogos() {
     $$("[data-auth]").forEach(b => b.addEventListener("click", () => abrirAuth(b.dataset.auth)));
-    $$("#dialogoAuth [data-tab]").forEach(b => b.addEventListener("click", () => { cambiarTab(b.dataset.tab); }));
+    $$("#dialogoAuth [data-tab]").forEach(b => b.addEventListener("click", () => cambiarTab(b.dataset.tab)));
     $$("dialog [data-cerrar]").forEach(b => b.addEventListener("click", () => b.closest("dialog").close()));
     $$("dialog").forEach(dlg => dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); }));
-    $("dialogoAuth").addEventListener("toggle", posicionarIndicador);
     window.addEventListener("resize", posicionarIndicador);
 }
 
@@ -315,20 +431,13 @@ function conectarFormulario(id, mensajeId, trabajo) {
     let ocupado = false;
     form.addEventListener("submit", async e => {
         e.preventDefault();
-        if (ocupado) return;
-        if (!form.reportValidity()) return;
+        if (ocupado || !form.reportValidity()) return;
         ocupado = true;
         const boton = form.querySelector('button[type="submit"]');
         if (boton) { boton.disabled = true; boton.classList.add("cargando"); }
         setMensaje(mensajeId, "Procesando…", "carga");
-        try {
-            await trabajo(form);
-        } catch (err) {
-            setMensaje(mensajeId, err.message, "error");
-        } finally {
-            ocupado = false;
-            if (boton) { boton.disabled = false; boton.classList.remove("cargando"); }
-        }
+        try { await trabajo(form); } catch (err) { setMensaje(mensajeId, err.message, "error"); }
+        finally { ocupado = false; if (boton) { boton.disabled = false; boton.classList.remove("cargando"); } }
     });
 }
 
@@ -343,15 +452,10 @@ function evaluarClave(v) {
 }
 
 function configurarAuth() {
-    const validarClave = () => {
-        $("confirmarClave").setCustomValidity(
-            $("claveUsuario").value === $("confirmarClave").value ? "" : "Las contraseñas no coinciden"
-        );
-    };
+    const validarClave = () => $("confirmarClave").setCustomValidity($("claveUsuario").value === $("confirmarClave").value ? "" : "Las contraseñas no coinciden");
     $("claveUsuario").addEventListener("input", () => {
         validarClave();
-        const f = evaluarClave($("claveUsuario").value);
-        const barra = $("fuerzaBarra");
+        const f = evaluarClave($("claveUsuario").value), barra = $("fuerzaBarra");
         barra.style.transform = `scaleX(${f / 5})`;
         barra.style.background = f <= 2 ? "var(--bad)" : f <= 3 ? "#D99A1E" : "var(--ok)";
     });
@@ -386,15 +490,14 @@ function configurarAuth() {
         const t = token;
         mostrarSesion(null, "");
         toast("Sesión cerrada.");
-        try { await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion: "cerrarSesion", token: t }) }); } catch (e) { /* sin red: la sesión local ya se cerró */ }
+        try { await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion: "cerrarSesion", token: t }) }); } catch (e) { /* sin red */ }
     });
 }
 
 /* ---------- Fotografía ---------- */
 function cargarImagen(archivo) {
     return new Promise((resolve, reject) => {
-        const url = URL.createObjectURL(archivo);
-        const img = new Image();
+        const url = URL.createObjectURL(archivo), img = new Image();
         img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
         img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("No se pudo leer la imagen. Prueba con otra foto.")); };
         img.src = url;
@@ -413,8 +516,7 @@ async function procesarFoto(archivo) {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, lienzo.width, lienzo.height);
     ctx.drawImage(img, 0, 0, lienzo.width, lienzo.height);
-    const dataUrl = lienzo.toDataURL("image/jpeg", 0.82);
-    const base64 = dataUrl.split(",")[1];
+    const dataUrl = lienzo.toDataURL("image/jpeg", 0.82), base64 = dataUrl.split(",")[1];
     return { base64, dataUrl, kb: Math.round(base64.length * 0.75 / 1024) };
 }
 
@@ -437,7 +539,6 @@ async function elegirFoto(archivo) {
         $("infoImagen").textContent = `Foto lista · ${fotoLista.kb} KB optimizada`;
         $("dzVacio").hidden = true;
         $("dzPrev").hidden = false;
-        pintarVistaPrevia();
     } catch (err) {
         limpiarFoto();
         setMensaje("mensajeRegistro", err.message, "error");
@@ -447,43 +548,67 @@ async function elegirFoto(archivo) {
 function configurarFoto() {
     const input = $("imagenDocumento"), zona = $("dropzone");
     input.addEventListener("change", () => elegirFoto(input.files[0]));
-    $("quitarImagen").addEventListener("click", e => { e.preventDefault(); limpiarFoto(); pintarVistaPrevia(); });
+    $("quitarImagen").addEventListener("click", e => { e.preventDefault(); limpiarFoto(); });
     ["dragenter", "dragover"].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.add("arrastra"); }));
     ["dragleave", "drop"].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.remove("arrastra"); }));
-    zona.addEventListener("drop", e => {
-        const f = e.dataTransfer && e.dataTransfer.files[0];
-        if (f) elegirFoto(f);
-    });
+    zona.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) elegirFoto(f); });
 }
 
 /* ---------- Reportar ---------- */
+function tipoSeleccionado() {
+    const v = $("formReportar").elements.TipoDocumento.value;
+    return v ? claveTipo(v) : "";
+}
+
+function detallesDelFormulario() {
+    const det = {};
+    $$("#camposExtra [name^='det_']").forEach(el => { if (el.value.trim()) det[el.name.slice(4)] = el.value.trim(); });
+    return det;
+}
+
+function pintarTipos() {
+    $("tiposReporte").innerHTML = Object.entries(TIPOS).map(([k, t]) =>
+        `<label class="tile">${icono(t.icono)}<span>${esc(t.corto)}</span><input type="radio" name="TipoDocumento" value="${esc(t.valor)}" required></label>`).join("");
+}
+
+function pintarExtras() {
+    const k = tipoSeleccionado(), t = TIPOS[k];
+    $("etqNumero").textContent = t ? t.numero : "Número del documento";
+    $("numeroCompleto").placeholder = t ? "Ej. " + t.ejemplo : "";
+    $("camposExtra").innerHTML = t ? t.extras.map(x => x.opts
+        ? `<div class="campo"><label for="det_${x.k}">${esc(x.label)}</label><select id="det_${x.k}" name="det_${x.k}" ${x.req ? "required" : ""}><option value="">Seleccionar</option>${x.opts.map(o => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select></div>`
+        : `<div class="campo"><label for="det_${x.k}">${esc(x.label)}</label><input type="text" id="det_${x.k}" name="det_${x.k}" maxlength="60" value="${esc(x.def || "")}" ${x.req ? "required" : ""}></div>`).join("") : "";
+}
+
 function pintarVistaPrevia() {
-    const f = $("formReportar");
-    const d = {
-        TipoDocumento: f.elements.TipoDocumento.value || "Cédula",
+    const f = $("formReportar"), k = tipoSeleccionado() || "cedula";
+    $("vistaTarjeta").innerHTML = docHTML({
+        TipoDocumento: TIPOS[k].valor,
         NombreVisible: enmascararNombre(f.elements.NombreCompleto.value),
         Ultimos4: String(f.elements.NumeroCompleto.value).replace(/[\s.\-]/g, "").slice(-4),
-        Zona: f.elements.Zona.value, FechaHallazgo: f.elements.FechaHallazgo.value,
-        Estado: "Disponible", TieneImagen: Boolean(fotoLista)
-    };
-    $("vistaTarjeta").innerHTML = tarjeta(d, { nombreVacio: "Nombre del titular" });
+        Estado: "Disponible", Detalles: detallesDelFormulario()
+    });
 }
 
 function configurarReporte() {
     const f = $("formReportar");
+    pintarTipos();
     f.elements.FechaHallazgo.max = hoyISO();
     f.elements.FechaNacimiento.max = hoyISO();
+    f.addEventListener("change", e => { if (e.target.name === "TipoDocumento") pintarExtras(); pintarVistaPrevia(); });
     f.addEventListener("input", pintarVistaPrevia);
-    f.addEventListener("change", pintarVistaPrevia);
     pintarVistaPrevia();
 
     conectarFormulario("formReportar", "mensajeRegistro", async form => {
         const datos = Object.fromEntries(new FormData(form));
-        delete datos.undefined;
+        const detalles = {};
+        Object.keys(datos).forEach(k => { if (k.startsWith("det_")) { detalles[k.slice(4)] = datos[k]; delete datos[k]; } });
+        datos.Detalles = detalles;
         if (fotoLista) { datos.imagenBase64 = fotoLista.base64; datos.imagenTipo = "image/jpeg"; }
         const res = await llamarAPI("agregarDocumento", datos, true);
         form.reset();
         limpiarFoto();
+        pintarExtras();
         pintarVistaPrevia();
         setMensaje("mensajeRegistro", `Documento registrado correctamente (${res.IDDocumento}). Gracias por ayudar a devolverlo.`, "ok");
         toast("Documento registrado. ¡Gracias!");
@@ -491,58 +616,90 @@ function configurarReporte() {
     });
 }
 
-/* ---------- Buscar ---------- */
-function configurarBusqueda() {
-    $("formBuscar").addEventListener("submit", async e => {
-        e.preventDefault();
-        const nombre = $("buscarNombre").value.trim();
-        const ultimos = $("buscarNumero").value.replace(/\D/g, "");
-        const zona = $("buscarZona").value;
-        if (!nombre && !ultimos && !zona) { limpiarBusqueda(); return; }
-        if (ultimos && ultimos.length !== 4) { toast("Escribe exactamente los 4 últimos dígitos.", "error"); return; }
-
-        const boton = $("btnBuscar");
-        boton.disabled = true; boton.classList.add("cargando");
-        pintarEsqueleto();
-        document.getElementById("documentos").scrollIntoView({ behavior: sinMovimiento ? "auto" : "smooth" });
-        try {
-            resultados = await llamarAPI("buscar", { nombre, ultimos, zona });
-            mostrarDocumentos(resultados, true);
-        } catch (err) {
-            resultados = null;
-            $("gridDocumentos").innerHTML = "";
-            $("estadoCarga").hidden = false;
-            $("estadoCarga").dataset.estado = "error";
-            $("estadoCarga").textContent = err.message;
-        } finally {
-            boton.disabled = false; boton.classList.remove("cargando");
-        }
-    });
-    $("limpiarBusqueda").addEventListener("click", limpiarBusqueda);
-    $("buscarNumero").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
+/* ---------- Buscador ---------- */
+function pintarChips() {
+    const items = [["", "Todos", "search"], ...Object.values(TIPOS).map(t => [t.valor, t.corto, t.icono])];
+    $("chipsTipo").innerHTML = items.map(([v, etq, ic]) =>
+        `<button type="button" class="chip-tipo" data-tipo="${esc(v)}" aria-pressed="${v === tipoBusqueda}">${icono(ic)}${esc(etq)}</button>`).join("");
 }
 
-function limpiarBusqueda() {
-    $("formBuscar").reset();
+async function buscarAhora(explicito = false) {
+    const nombre = $("buscarNombre").value.trim();
+    const ultimos = $("buscarNumero").value.replace(/\D/g, "");
+    const zona = $("buscarZona").value;
+    if (!nombre && !ultimos && !zona && !tipoBusqueda) { limpiarResultados(); return; }
+    if (ultimos && ultimos.length !== 4) {
+        if (explicito) toast("Escribe exactamente los 4 últimos dígitos.", "error");
+        return;
+    }
+    const mio = ++ordenBusqueda;
+    const boton = $("btnBuscar");
+    boton.classList.add("cargando");
+    pintarEsqueleto();
+    if (explicito) $("documentos").scrollIntoView({ behavior: sinMovimiento ? "auto" : "smooth" });
+    try {
+        const r = await llamarAPI("buscar", { nombre, ultimos, zona, tipo: tipoBusqueda });
+        if (mio !== ordenBusqueda) return;
+        resultados = r;
+        $("estadoCarga").hidden = true;
+        mostrarDocumentos(resultados, true);
+    } catch (err) {
+        if (mio !== ordenBusqueda) return;
+        resultados = null;
+        $("gridDocumentos").innerHTML = "";
+        $("estadoCarga").hidden = false;
+        $("estadoCarga").dataset.estado = "error";
+        $("estadoCarga").textContent = err.message;
+    } finally {
+        if (mio === ordenBusqueda) boton.classList.remove("cargando");
+    }
+}
+
+function limpiarResultados() {
+    ++ordenBusqueda;
     resultados = null;
     $("estadoCarga").hidden = true;
+    $("btnBuscar").classList.remove("cargando");
     mostrarDocumentos(documentos, false);
+}
+
+function configurarBusqueda() {
+    pintarChips();
+    const enVivo = debounce(() => buscarAhora(false), 450);
+    $("formBuscar").addEventListener("submit", e => { e.preventDefault(); buscarAhora(true); });
+    ["buscarNombre", "buscarNumero"].forEach(id => $(id).addEventListener("input", enVivo));
+    $("buscarZona").addEventListener("change", () => buscarAhora(false));
+    $("buscarNumero").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
+    $("chipsTipo").addEventListener("click", e => {
+        const b = e.target.closest(".chip-tipo");
+        if (!b) return;
+        tipoBusqueda = b.dataset.tipo;
+        pintarChips();
+        buscarAhora(false);
+    });
+    $("limpiarBusqueda").addEventListener("click", () => {
+        $("formBuscar").reset();
+        tipoBusqueda = "";
+        pintarChips();
+        limpiarResultados();
+    });
 }
 
 /* ---------- Reclamar ---------- */
 function resumenReclamo() {
     const id = $("documentoReclamo").value;
     const d = documentos.find(x => x.IDDocumento === id);
+    $("etqNumeroVer").textContent = d ? TIPOS[claveTipo(d.TipoDocumento)].numero + " completo" : "Número completo del documento";
     $("resumenReclamo").innerHTML = d
-        ? tarjeta(d) + `<p class="ayuda">Código <span class="dcard-id">${esc(d.IDDocumento)}</span> · Hallado en ${esc(d.Zona)}</p>`
+        ? docHTML(d) + `<p class="ayuda">Código ${esc(d.IDDocumento)} · hallado en ${esc(d.Zona)}</p>`
         : `<div class="vacio-reclamo">${icono("id", "ico-lg")}<p>Elige un documento para ver su tarjeta.</p></div>`;
 }
 
 function seleccionarReclamo(id) {
     $("documentoReclamo").value = id;
     resumenReclamo();
-    document.getElementById("reclamos").scrollIntoView({ behavior: sinMovimiento ? "auto" : "smooth" });
-    setTimeout(() => ($("camposReclamo").disabled ? $$(".avisoSesion .btn")[1] : $("numeroVerificacion")).focus({ preventScroll: true }), 600);
+    $("reclamos").scrollIntoView({ behavior: sinMovimiento ? "auto" : "smooth" });
+    setTimeout(() => { if (!$("camposReclamo").disabled) $("numeroVerificacion").focus({ preventScroll: true }); }, 600);
     if (!usuario) toast("Inicia sesión para reclamar este documento.", "error");
 }
 
@@ -553,19 +710,16 @@ function enlaceWhatsApp(tel) {
 }
 
 function mostrarEntrega(p) {
-    const d = p.documento || {}, c = p.contacto || {};
-    const wa = enlaceWhatsApp(c.Telefono);
+    const d = p.documento || {}, c = p.contacto || {}, wa = enlaceWhatsApp(c.Telefono);
     $("contenidoEntrega").innerHTML = `
     <div class="entrega">
         <div class="entrega-cab">
             <span class="sello-ok">${icono("check")}</span>
             <div><h2 id="tituloEntrega">Titularidad verificada</h2><p>Los datos coinciden. Ya puedes coordinar la entrega.</p></div>
         </div>
-        <div class="entrega-foto">
-            ${p.imagen ? `<img src="${esc(p.imagen)}" alt="Fotografía del documento encontrado">` : `<p class="sin-foto">Quien lo encontró no adjuntó fotografía.</p>`}
-        </div>
+        <div class="entrega-foto">${p.imagen ? `<img src="${esc(p.imagen)}" alt="Fotografía del documento encontrado">` : '<p class="sin-foto">Quien lo encontró no adjuntó fotografía.</p>'}</div>
         <dl class="entrega-datos">
-            <div><dt>Documento</dt><dd>${esc(TIPOS[claseTipo(d.TipoDocumento)])} · ${esc(d.IDDocumento)}</dd></div>
+            <div><dt>Documento</dt><dd>${esc(TIPOS[claveTipo(d.TipoDocumento)].valor)} · ${esc(d.IDDocumento)}</dd></div>
             <div><dt>Hallado el</dt><dd>${esc(fmtFecha(d.FechaHallazgo))}</dd></div>
             <div class="ancho"><dt>Lugar</dt><dd>${esc(d.LugarHallazgo || d.Zona)} · ${esc(d.Zona)}</dd></div>
             ${d.Descripcion ? `<div class="ancho"><dt>Nota de quien lo encontró</dt><dd>${esc(d.Descripcion)}</dd></div>` : ""}
@@ -573,9 +727,7 @@ function mostrarEntrega(p) {
         <div class="contacto">
             <h3>Quien lo encontró: ${esc(c.Nombre || "")}</h3>
             <p class="tel">${esc(c.Telefono || "Sin teléfono")}</p>
-            <div class="btns">
-                ${wa ? `<a class="btn btn-solid btn-sm" href="${esc(wa)}" target="_blank" rel="noopener">${icono("phone")}Escribir por WhatsApp</a>` : ""}
-            </div>
+            ${wa ? `<div><a class="btn btn-solid btn-sm" href="${esc(wa)}" target="_blank" rel="noopener">${icono("phone")}Escribir por WhatsApp</a></div>` : ""}
             <small>Coordina la entrega en un lugar público y lleva otra identificación de respaldo.</small>
         </div>
     </div>`;
@@ -586,7 +738,6 @@ function mostrarEntrega(p) {
 function configurarReclamo() {
     $("documentoReclamo").addEventListener("change", resumenReclamo);
     $("nacimientoVerificacion").max = hoyISO();
-
     $("actualizarReclamos").addEventListener("click", async () => {
         const b = $("actualizarReclamos");
         b.disabled = true;
@@ -597,16 +748,69 @@ function configurarReclamo() {
         const res = await llamarAPI("verificarReclamo", Object.fromEntries(new FormData(form)), true);
         if (res.verificado) {
             form.reset();
-            setMensaje("mensajeReclamo", `Verificación exitosa. Documento ${res.paquete.documento.IDDocumento} marcado como entregado.`, "ok");
+            setMensaje("mensajeReclamo", `Verificación exitosa. El documento ${res.paquete.documento.IDDocumento} quedó marcado como entregado.`, "ok");
             mostrarEntrega(res.paquete);
             await actualizarDatos();
             cargarVerificados();
         } else {
-            setMensaje("mensajeReclamo",
-                res.restantes > 0
-                    ? `Los datos no coinciden. Te quedan ${res.restantes} ${res.restantes === 1 ? "intento" : "intentos"} para este documento.`
-                    : "Los datos no coinciden y agotaste tus intentos para este documento.", "error");
+            setMensaje("mensajeReclamo", res.restantes > 0
+                ? `Los datos no coinciden. Te quedan ${res.restantes} ${res.restantes === 1 ? "intento" : "intentos"} para este documento.`
+                : "Los datos no coinciden y agotaste tus intentos para este documento.", "error");
         }
+    });
+}
+
+/* ---------- Guía ---------- */
+function pintarTablaGuia() {
+    $("tablaTipos").innerHTML = Object.values(TIPOS).map(t => `
+        <tr>
+            <td>${icono(t.icono)}${esc(t.valor)}</td>
+            <td>${esc(t.numero)}${t.extras.map(x => ", " + esc(x.label.toLowerCase().replace(/^¿|\?$/g, ""))).join("")}</td>
+            <td>Nombre abreviado, últimos 4 dígitos, zona${t.extras.map(x => ", " + esc(x.publico)).join("")}</td>
+        </tr>`).join("");
+}
+
+function configurarGuia() {
+    pintarTablaGuia();
+    const tabs = $$(".g-tab");
+    const activar = tab => {
+        tabs.forEach(t => {
+            const on = t === tab;
+            t.setAttribute("aria-selected", on);
+            t.tabIndex = on ? 0 : -1;
+            $(t.getAttribute("aria-controls")).hidden = !on;
+        });
+        tab.scrollIntoView({ block: "nearest", inline: "center", behavior: "auto" });
+    };
+    tabs.forEach((t, i) => {
+        t.addEventListener("click", () => activar(t));
+        t.addEventListener("keydown", e => {
+            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+            const sig = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+            activar(sig); sig.focus();
+        });
+    });
+}
+
+/* ---------- Vistas (aplicación / guía) ---------- */
+function aplicarVista() {
+    const esGuia = location.hash.startsWith("#guia");
+    document.body.dataset.vista = esGuia ? "guia" : "app";
+    $("vistaApp").hidden = esGuia;
+    $("vistaGuia").hidden = !esGuia;
+    $("enlaceGuia").classList.toggle("activo", esGuia);
+    $("menu").classList.remove("abierto");
+    $("btnMenu").setAttribute("aria-expanded", "false");
+    return esGuia;
+}
+
+function configurarVistas() {
+    aplicarVista();
+    window.addEventListener("hashchange", () => {
+        const esGuia = aplicarVista();
+        if (esGuia) { window.scrollTo(0, 0); return; }
+        const id = location.hash.slice(1), destino = id && document.getElementById(id);
+        if (destino) destino.scrollIntoView({ behavior: "auto" }); else window.scrollTo(0, 0);
     });
 }
 
@@ -615,7 +819,6 @@ function configurarDelegados() {
     document.addEventListener("click", async e => {
         const rec = e.target.closest("[data-reclamar]");
         if (rec) { seleccionarReclamo(rec.dataset.reclamar); return; }
-
         const ent = e.target.closest("[data-entrega]");
         if (ent) {
             ent.disabled = true;
@@ -632,58 +835,48 @@ function observarReveal(raiz = document) {
     const nodos = $$(".rv:not(.in)", raiz);
     if (!("IntersectionObserver" in window) || sinMovimiento) { nodos.forEach(n => n.classList.add("in")); return; }
     if (!observadorReveal) {
-        observadorReveal = new IntersectionObserver(entradas => {
-            entradas.forEach(en => {
-                if (en.isIntersecting) { en.target.classList.add("in"); observadorReveal.unobserve(en.target); }
-            });
-        }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+        observadorReveal = new IntersectionObserver(es => es.forEach(en => {
+            if (en.isIntersecting) { en.target.classList.add("in"); observadorReveal.unobserve(en.target); }
+        }), { threshold: 0.1, rootMargin: "0px 0px -5% 0px" });
     }
     nodos.forEach(n => observadorReveal.observe(n));
 }
 
 function configurarContadores() {
     const nodos = $$(".stat-n");
-    const alVer = el => {
-        el.dataset.visto = "1";
-        const meta = Number(el.dataset.target) || 0;
-        el.textContent = "0";
-        contador(el, meta);
-    };
     if (!("IntersectionObserver" in window) || sinMovimiento) { nodos.forEach(n => { n.dataset.visto = "1"; }); return; }
     const obs = new IntersectionObserver(es => es.forEach(en => {
-        if (en.isIntersecting) { alVer(en.target); obs.unobserve(en.target); }
+        if (!en.isIntersecting) return;
+        const el = en.target, meta = Number(el.dataset.target) || 0;
+        el.dataset.visto = "1";
+        el.textContent = "0";
+        contador(el, meta);
+        obs.unobserve(el);
     }), { threshold: 0.6 });
     nodos.forEach(n => obs.observe(n));
 }
 
 function configurarScroll() {
-    const barra = $("barraScroll"), top = $("top"), hero = $("inicio"), pasos = $("pasos");
+    const barra = $("barraScroll"), top = $("top"), hero = $("inicio");
     let pendiente = false;
     const actualizar = () => {
         pendiente = false;
         const y = window.scrollY, max = document.documentElement.scrollHeight - window.innerHeight;
         barra.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
         top.classList.toggle("scrolled", y > 12);
-        if (!sinMovimiento) {
-            const h = hero.offsetHeight || 1;
-            hero.style.setProperty("--sy", Math.min(1, Math.max(0, y / h)).toFixed(3));
-            const r = pasos.getBoundingClientRect(), vh = window.innerHeight;
-            const p = (vh * 0.7 - r.top) / (r.height || 1);
-            pasos.style.setProperty("--p", Math.min(1, Math.max(0, p)).toFixed(3));
-        } else {
-            pasos.style.setProperty("--p", 1);
+        if (!sinMovimiento && !hero.closest("[hidden]")) {
+            hero.style.setProperty("--sy", Math.min(1, Math.max(0, y / (hero.offsetHeight || 1))).toFixed(3));
         }
     };
     window.addEventListener("scroll", () => { if (!pendiente) { pendiente = true; requestAnimationFrame(actualizar); } }, { passive: true });
     window.addEventListener("resize", actualizar);
     actualizar();
 
-    // enlace activo en el menú
-    const enlaces = $$("#menu a");
+    const enlaces = $$("#menu a").filter(a => a.id !== "enlaceGuia");
     const secciones = enlaces.map(a => document.querySelector(a.getAttribute("href"))).filter(Boolean);
     if ("IntersectionObserver" in window) {
         const obs = new IntersectionObserver(es => es.forEach(en => {
-            if (en.isIntersecting) {
+            if (en.isIntersecting && document.body.dataset.vista === "app") {
                 enlaces.forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#" + en.target.id));
             }
         }), { rootMargin: "-45% 0px -50% 0px" });
@@ -694,15 +887,12 @@ function configurarScroll() {
 function configurarMenu() {
     const btn = $("btnMenu"), menu = $("menu");
     const cerrar = () => { menu.classList.remove("abierto"); btn.setAttribute("aria-expanded", "false"); };
-    btn.addEventListener("click", () => {
-        const abierto = menu.classList.toggle("abierto");
-        btn.setAttribute("aria-expanded", abierto);
-    });
+    btn.addEventListener("click", () => btn.setAttribute("aria-expanded", menu.classList.toggle("abierto")));
     menu.addEventListener("click", e => { if (e.target.closest("a")) cerrar(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); });
+    document.addEventListener("click", e => { if (!e.target.closest("#menu, #btnMenu")) cerrar(); });
 }
 
-// Inclinación 3D de las tarjetas siguiendo el puntero
 function configurarInclinacion() {
     if (sinMovimiento || !window.matchMedia("(hover: hover)").matches) return;
     let actual = null;
@@ -710,21 +900,37 @@ function configurarInclinacion() {
     document.addEventListener("pointermove", e => {
         const el = e.target.closest ? e.target.closest("[data-tilt]") : null;
         if (actual && actual !== el) { reset(actual); actual = null; }
-        if (!el) return;
+        if (!el || el.closest(".hero-vis")) return;
         actual = el;
-        const r = el.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
         el.classList.add("tilting");
-        el.style.setProperty("--ry", ((x - 0.5) * 14).toFixed(2) + "deg");
-        el.style.setProperty("--rx", ((0.5 - y) * 12).toFixed(2) + "deg");
+        el.style.setProperty("--ry", ((x - 0.5) * 12).toFixed(2) + "deg");
+        el.style.setProperty("--rx", ((0.5 - y) * 10).toFixed(2) + "deg");
         el.style.setProperty("--gx", (x * 100).toFixed(1) + "%");
         el.style.setProperty("--gy", (y * 100).toFixed(1) + "%");
     }, { passive: true });
-    document.addEventListener("pointerleave", () => { if (actual) { reset(actual); actual = null; } }, true);
+}
+
+// Si el logo no carga (sin red o bloqueado) se muestra un icono de respaldo
+function configurarLogo() {
+    $$(".logo-img").forEach(img => {
+        const respaldo = () => {
+            const s = document.createElement("span");
+            s.className = "logo-fallback";
+            s.style.width = s.style.height = (img.getAttribute("width") || 40) + "px";
+            s.innerHTML = icono("shield");
+            img.replaceWith(s);
+        };
+        if (img.complete && img.naturalWidth === 0) respaldo(); else img.addEventListener("error", respaldo, { once: true });
+    });
 }
 
 /* ---------- Inicio ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
+    configurarLogo();
+    pintarHero();
+    configurarVistas();
+    configurarGuia();
     configurarDialogos();
     configurarAuth();
     configurarFoto();
@@ -737,18 +943,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     configurarInclinacion();
     configurarContadores();
     observarReveal();
-    const tokenGuardado = token;
+
+    const guardado = token;
     mostrarSesion(null, "");
     resumenReclamo();
-
-    if (tokenGuardado) {
+    if (guardado) {
         try {
-            token = tokenGuardado;
+            token = guardado;
             const res = await llamarAPI("miSesion", {}, true);
-            mostrarSesion(res.usuario, tokenGuardado);
-        } catch (e) {
-            mostrarSesion(null, "");
-        }
+            mostrarSesion(res.usuario, guardado);
+        } catch (e) { mostrarSesion(null, ""); }
     }
     await actualizarDatos();
 });
