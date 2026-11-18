@@ -5,8 +5,7 @@
    HTML + CSS + JS puros · Google Apps Script + Sheets + Drive
    ========================================================== */
 
-// URL de tu implementación de Apps Script (termina en /exec)
-const API_URL = "https://script.google.com/macros/s/AKfycbw4J-eCXZba7sBUwdmQodq6bthN2g0Hapas2b3FCyJKbzWlgC6cHvKhU6GD6LHY-S2i/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxvT-mSdTl24ilD1YPin8sjTZdVE-CtPEoIIOI9fxMUefarkHtCpM8kALASugYGMnIW/exec";
 
 const CLAVE_SESION = "midocumento_sesion";
 const MAX_FOTO_MB = 5;
