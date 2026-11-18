@@ -9,9 +9,9 @@
     <meta name="theme-color" content="#F3EFE7">
     <meta property="og:title" content="MiDocumento">
     <meta property="og:description" content="Reporta, busca y recupera documentos de identidad extraviados en Cochabamba.">
-    <meta property="og:image" content="https://imgur.com/yiauq8e.jpeg">
-    <link rel="icon" href="https://imgur.com/yiauq8e.jpeg">
-    <link rel="apple-touch-icon" href="https://imgur.com/yiauq8e.jpeg">
+    <meta property="og:image" content="https://i.imgur.com/RX0djVr.jpeg">
+    <link rel="icon" href="https://i.imgur.com/RX0djVr.jpeg">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/RX0djVr.jpeg">
     <script>document.documentElement.classList.add("js");</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,7 +64,7 @@
     <!-- ===== Cabecera ===== -->
     <header class="top" id="top">
         <a class="brand" href="#inicio" aria-label="MiDocumento, inicio">
-            <img class="logo-img" src="https://imgur.com/yiauq8e.jpeg" alt="" width="40" height="40" referrerpolicy="no-referrer">
+            <img class="logo-img" src="https://i.imgur.com/RX0djVr.jpeg" alt="" width="40" height="40" referrerpolicy="no-referrer">
             <span class="brand-txt">Mi<b>Documento</b></span>
         </a>
 
@@ -104,7 +104,6 @@
 
             <section id="inicio" class="hero">
                 <div class="hero-txt">
-                    <p class="eyebrow rv">Cochabamba · Bolivia</p>
                     <h1 class="rv" style="--d:.06s">Documentos extraviados,<br>devueltos a su titular.</h1>
                     <p class="lead rv" style="--d:.12s">Plataforma colaborativa para reportar, buscar y recuperar documentos de identidad, con verificación de titularidad.</p>
                     <div class="hero-cta rv" style="--d:.18s">
@@ -138,7 +137,6 @@
             <section id="buscar" class="sec buscar">
                 <div class="wrap">
                     <header class="sec-cab">
-                        <p class="eyebrow">Buscar</p>
                         <h2>Encuentra tu documento</h2>
                     </header>
 
@@ -186,7 +184,6 @@
                 <div class="wrap dos-col">
                     <div class="col-form">
                         <header class="sec-cab">
-                            <p class="eyebrow">Reportar</p>
                             <h2>Registrar un documento encontrado</h2>
                         </header>
 
@@ -205,7 +202,7 @@
 
                                 <div class="campo">
                                     <label for="nombreCompleto">Nombre completo del titular</label>
-                                    <input type="text" id="nombreCompleto" name="NombreCompleto" maxlength="120" autocomplete="off" required>
+                                    <input type="text" id="nombreCompleto" name="NombreCompleto" maxlength="120" autocomplete="off" placeholder="Nombres y apellidos" required>
                                     <p class="ayuda">Se mostrará abreviado, por ejemplo «María G. L.».</p>
                                 </div>
 
@@ -217,7 +214,7 @@
                                     </div>
                                     <div class="campo">
                                         <label for="fechaNacimiento">Fecha de nacimiento del titular</label>
-                                        <input type="date" id="fechaNacimiento" name="FechaNacimiento" aria-describedby="ayudaNac" required>
+                                        <input type="date" id="fechaNacimiento" name="FechaNacimiento" min="1900-01-01" aria-describedby="ayudaNac" required>
                                         <p class="ayuda" id="ayudaNac">Se guarda cifrada. Sirve para verificar al dueño.</p>
                                     </div>
                                 </div>
@@ -233,7 +230,7 @@
                                     </div>
                                     <div class="campo">
                                         <label for="fechaHallazgo">Fecha del hallazgo</label>
-                                        <input type="date" id="fechaHallazgo" name="FechaHallazgo" required>
+                                        <input type="date" id="fechaHallazgo" name="FechaHallazgo" min="2000-01-01" required>
                                     </div>
                                 </div>
                                 <div class="campo">
@@ -245,9 +242,9 @@
                                     <textarea id="descripcion" name="Descripcion" maxlength="500" rows="2" placeholder="Estado del documento, dónde lo guardas…"></textarea>
                                 </div>
 
-                                <p class="paso-tit"><span>4</span>Fotografía del documento</p>
+                                <p class="paso-tit"><span>4</span>Fotografía del documento <em class="obl">obligatoria</em></p>
                                 <label class="dropzone" id="dropzone" for="imagenDocumento">
-                                    <input type="file" id="imagenDocumento" accept="image/jpeg,image/png" aria-describedby="ayudaFoto">
+                                    <input type="file" id="imagenDocumento" accept="image/jpeg,image/png" aria-describedby="ayudaFoto errorFoto" aria-required="true">
                                     <span class="dz-vacio" id="dzVacio">
                                         <svg class="ico ico-lg" aria-hidden="true"><use href="#i-camera"/></svg>
                                         <strong>Arrastra la foto o toca para elegirla</strong>
@@ -261,6 +258,7 @@
                                         </span>
                                     </span>
                                 </label>
+                                <p class="error-campo" id="errorFoto" role="alert" hidden>Adjunta una fotografía del documento para poder registrarlo.</p>
 
                                 <button type="submit" class="btn btn-solid btn-lg btn-full" style="margin-top:24px">
                                     Registrar documento
@@ -297,9 +295,8 @@
 
                     <div class="col-form">
                         <header class="sec-cab">
-                            <p class="eyebrow">Reclamar</p>
                             <h2>Verificar titularidad</h2>
-                            <p class="sec-sub">Escribe los datos tal como figuran en el documento. Tienes <strong>3 intentos</strong> por documento.</p>
+                            <p class="sec-sub">Escribe nombre, número y fecha de nacimiento tal como figuran en el documento. Tienes <strong>3 intentos</strong> por documento.</p>
                         </header>
 
                         <div class="aviso avisoSesion">
@@ -321,13 +318,18 @@
                                     </div>
                                 </div>
                                 <div class="campo">
+                                    <label for="nombreVerificacion">Nombre completo del titular</label>
+                                    <input type="text" id="nombreVerificacion" name="NombreCompleto" maxlength="120" autocomplete="off" aria-describedby="ayudaNombreVer" required>
+                                    <p class="ayuda" id="ayudaNombreVer">Nombres y apellidos, tal como figuran en el documento.</p>
+                                </div>
+                                <div class="campo">
                                     <label for="numeroVerificacion" id="etqNumeroVer">Número completo del documento</label>
                                     <input type="text" id="numeroVerificacion" name="NumeroCompleto" maxlength="20" autocomplete="off" required>
                                 </div>
                                 <div class="campo">
                                     <label for="nacimientoVerificacion">Fecha de nacimiento del titular</label>
-                                    <input type="date" id="nacimientoVerificacion" name="FechaNacimiento" required>
-                                    <p class="ayuda">Los datos se comparan cifrados; nunca se muestran ni se guardan tal cual.</p>
+                                    <input type="date" id="nacimientoVerificacion" name="FechaNacimiento" min="1900-01-01" required>
+                                    <p class="ayuda">Número y fecha se comparan cifrados. Nada de lo que escribes se guarda ni se muestra.</p>
                                 </div>
                                 <button type="submit" class="btn btn-solid btn-lg btn-full" id="enviarReclamo">
                                     <svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>
@@ -361,7 +363,6 @@
             <section class="guia">
                 <div class="wrap">
                     <header class="guia-cab">
-                        <p class="eyebrow">Guía de uso</p>
                         <h1>Todo lo que necesitas saber</h1>
                         <p class="sec-sub">Elige tu caso. Cada pestaña termina con el botón que te lleva a la acción.</p>
                     </header>
@@ -378,7 +379,7 @@
                         <ol class="g-pasos">
                             <li><span>1</span><div><h3>Busca</h3><p>Escribe tu nombre, elige el tipo de documento y, si lo recuerdas, los últimos 4 dígitos y la zona.</p></div></li>
                             <li><span>2</span><div><h3>Reconoce tu documento</h3><p>Verás una tarjeta con tu nombre abreviado, la zona y la fecha del hallazgo. La foto permanece oculta.</p></div></li>
-                            <li><span>3</span><div><h3>Verifica</h3><p>Inicia sesión y escribe el número completo y tu fecha de nacimiento. Tienes 3 intentos.</p></div></li>
+                            <li><span>3</span><div><h3>Verifica</h3><p>Inicia sesión y escribe tu nombre completo, el número completo del documento y tu fecha de nacimiento. Tienes 3 intentos.</p></div></li>
                             <li><span>4</span><div><h3>Coordina la entrega</h3><p>Si los datos coinciden, verás la foto y el contacto de quien lo encontró.</p></div></li>
                         </ol>
                         <div class="g-acc">
@@ -391,7 +392,7 @@
                         <ol class="g-pasos">
                             <li><span>1</span><div><h3>Crea una cuenta</h3><p>Cada reporte queda asociado a una persona responsable.</p></div></li>
                             <li><span>2</span><div><h3>Elige el tipo y completa los datos</h3><p>El formulario cambia según el documento: número, nombre completo, fecha de nacimiento y datos propios de cada tipo.</p></div></li>
-                            <li><span>3</span><div><h3>Sube una fotografía</h3><p>Una imagen nítida del anverso. Se guarda en una carpeta privada y no es visible al público.</p></div></li>
+                            <li><span>3</span><div><h3>Sube una fotografía</h3><p>Es obligatoria: sin foto no se puede registrar el documento. Debe ser nítida y del anverso. Se guarda en una carpeta privada y no es visible al público.</p></div></li>
                             <li><span>4</span><div><h3>Espera el reclamo</h3><p>Resguarda el documento. Cuando el titular se verifique, recibirá tu contacto para coordinar.</p></div></li>
                         </ol>
                         <div class="g-acc">
@@ -422,7 +423,7 @@
                             </div>
                         </div>
                         <ul class="reglas">
-                            <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg><div><strong>Hash con sal</strong><span>Los datos de verificación no pueden leerse ni recuperarse.</span></div></li>
+                            <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg><div><strong>Hash con sal</strong><span>Número y fecha de nacimiento no pueden leerse ni recuperarse.</span></div></li>
                             <li><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg><div><strong>3 intentos</strong><span>Tras tres fallos, el usuario queda bloqueado para ese documento.</span></div></li>
                             <li><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><div><strong>Cuenta obligatoria</strong><span>Reportar y reclamar exige sesión. Cada intento queda registrado.</span></div></li>
                             <li><svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg><div><strong>Entrega segura</strong><span>Coordina en un lugar público y lleva otra identificación.</span></div></li>
@@ -432,7 +433,7 @@
 
                     <div class="g-panel" role="tabpanel" id="gp-faq" aria-labelledby="gt-faq" hidden>
                         <div class="faq">
-                            <details><summary>¿Qué pasa si no recuerdo el número completo?</summary><p>Sin el número completo y la fecha de nacimiento no es posible verificar. Puedes buscar con el nombre y los últimos 4 dígitos, pero la entrega exige ambos datos.</p></details>
+                            <details><summary>¿Qué pasa si no recuerdo el número completo?</summary><p>Para verificar se piden tres datos: nombre completo, número completo y fecha de nacimiento. Puedes buscar con el nombre y los últimos 4 dígitos, pero la entrega exige los tres.</p></details>
                             <details><summary>¿Quién puede ver la fotografía?</summary><p>Solo quien supera la verificación de titularidad. Nadie más, ni siquiera en las listas públicas.</p></details>
                             <details><summary>¿Cuántos intentos tengo?</summary><p>Tres por documento. Después, el sistema bloquea tu cuenta para ese documento.</p></details>
                             <details><summary>¿Reemplaza a los trámites oficiales?</summary><p>No. MiDocumento facilita la devolución entre personas. No consulta SEGIP ni usa biometría; si no encuentras tu documento, debes tramitar la reposición ante la institución emisora.</p></details>
@@ -450,7 +451,7 @@
         <i class="tricolor" aria-hidden="true"></i>
         <div class="wrap pie-in">
             <a class="brand brand-pie" href="#inicio">
-                <img class="logo-img" src="https://imgur.com/yiauq8e.jpeg" alt="" width="32" height="32" referrerpolicy="no-referrer">
+                <img class="logo-img" src="https://i.imgur.com/RX0djVr.jpeg" alt="" width="32" height="32" referrerpolicy="no-referrer">
                 <span class="brand-txt">Mi<b>Documento</b></span>
             </a>
             <p>Sistema web colaborativo de documentos extraviados</p>
@@ -462,7 +463,7 @@
     <dialog id="dialogoAuth" class="dialogo" aria-labelledby="tituloAuth">
         <div class="dlg-in">
             <button type="button" class="icon-btn dlg-x" data-cerrar aria-label="Cerrar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
-            <img class="logo-img dlg-logo" src="https://imgur.com/yiauq8e.jpeg" alt="" width="52" height="52" referrerpolicy="no-referrer">
+            <img class="logo-img dlg-logo" src="https://i.imgur.com/RX0djVr.jpeg" alt="" width="52" height="52" referrerpolicy="no-referrer">
 
             <div class="tabs" role="tablist" aria-label="Acceso">
                 <button type="button" role="tab" id="tabLogin" class="tab" aria-selected="true" aria-controls="panelLogin" data-tab="login">Ingresar</button>
