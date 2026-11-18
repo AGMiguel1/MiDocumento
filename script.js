@@ -6,7 +6,7 @@
    ========================================================== */
 
 // URL de tu implementación de Apps Script (termina en /exec)
-const API_URL = "https://script.google.com/macros/s/AKfycbymStVu34f64kYyjvfNbBLoqPhLhV4ES774MQXtVkp6mOuBy1CTgn_iMgV4iwNaBHgl/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw4J-eCXZba7sBUwdmQodq6bthN2g0Hapas2b3FCyJKbzWlgC6cHvKhU6GD6LHY-S2i/exec";
 
 const CLAVE_SESION = "midocumento_sesion";
 const MAX_FOTO_MB = 5;
@@ -40,6 +40,48 @@ function hoyISO() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+/* ---------- Validaciones (las mismas reglas se repiten en el servidor) ---------- */
+const FECHA_MIN_NAC = "1900-01-01";
+const FECHA_MIN_HALLAZGO = "2000-01-01";
+const EDAD_MAX = 110;
+const RE_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'.\- ]*$/;
+
+function edadEn(nac, ref) {
+    const [y, m, d] = nac.split("-").map(Number), [Y, M, D] = ref.split("-").map(Number);
+    let e = Y - y;
+    if (M < m || (M === m && D < d)) e--;
+    return e;
+}
+function errorNombre(v) {
+    v = String(v || "").trim().replace(/\s+/g, " ");
+    if (!v) return "Escribe el nombre completo.";
+    if (!RE_NOMBRE.test(v)) return "Usa solo letras, espacios, apóstrofes, puntos o guiones.";
+    if (v.split(" ").length < 2) return "Escribe nombres y apellidos (al menos dos palabras).";
+    if (v.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, "").length < 4) return "El nombre es demasiado corto.";
+    return "";
+}
+function errorNumero(v, clave) {
+    const n = String(v || "").toUpperCase().replace(/[\s.\-]/g, "");
+    if (clave === "cedula") return /^\d{5,10}$/.test(n) ? "" : "La cédula debe tener entre 5 y 10 dígitos, sin complemento.";
+    return /^[0-9A-Z]{5,15}$/.test(n) ? "" : "Debe tener entre 5 y 15 caracteres (letras y números).";
+}
+function errorNacimiento(v) {
+    if (!v) return "Indica la fecha de nacimiento.";
+    if (v > hoyISO()) return "La fecha de nacimiento no puede ser posterior a hoy.";
+    if (v < FECHA_MIN_NAC || edadEn(v, hoyISO()) > EDAD_MAX) return "La fecha de nacimiento no es válida.";
+    return "";
+}
+function errorHallazgo(h, nac, clave) {
+    if (!h) return "Indica la fecha del hallazgo.";
+    if (h > hoyISO()) return "La fecha del hallazgo no puede ser futura.";
+    if (h < FECHA_MIN_HALLAZGO) return "La fecha del hallazgo es demasiado antigua.";
+    if (nac && h < nac) return "El hallazgo no puede ser anterior al nacimiento del titular.";
+    if (nac && clave === "licencia" && edadEn(nac, h) < 16) return "Una licencia de conducir exige un titular de 16 años o más.";
+    return "";
+}
+// Aplica el mensaje solo si el campo tiene contenido (el atributo required cubre el vacío)
+function fijarError(el, msg) { el.setCustomValidity(el.value && msg ? msg : ""); }
 
 /* ---------- Catálogo de documentos ---------- */
 const DEPARTAMENTOS = ["La Paz", "Cochabamba", "Santa Cruz", "Oruro", "Potosí", "Chuquisaca", "Tarija", "Beni", "Pando"];
@@ -426,12 +468,15 @@ function configurarDialogos() {
 }
 
 /* ---------- Formularios ---------- */
-function conectarFormulario(id, mensajeId, trabajo) {
+function conectarFormulario(id, mensajeId, trabajo, ganchos = {}) {
     const form = $(id);
     let ocupado = false;
     form.addEventListener("submit", async e => {
         e.preventDefault();
-        if (ocupado || !form.reportValidity()) return;
+        if (ocupado) return;
+        if (ganchos.antes) ganchos.antes(form);
+        if (!form.reportValidity()) return;
+        if (ganchos.despues && !ganchos.despues(form)) return;
         ocupado = true;
         const boton = form.querySelector('button[type="submit"]');
         if (boton) { boton.disabled = true; boton.classList.add("cargando"); }
@@ -539,6 +584,8 @@ async function elegirFoto(archivo) {
         $("infoImagen").textContent = `Foto lista · ${fotoLista.kb} KB optimizada`;
         $("dzVacio").hidden = true;
         $("dzPrev").hidden = false;
+        $("errorFoto").hidden = true;
+        $("dropzone").classList.remove("invalida");
     } catch (err) {
         limpiarFoto();
         setMensaje("mensajeRegistro", err.message, "error");
@@ -575,6 +622,7 @@ function pintarExtras() {
     const k = tipoSeleccionado(), t = TIPOS[k];
     $("etqNumero").textContent = t ? t.numero : "Número del documento";
     $("numeroCompleto").placeholder = t ? "Ej. " + t.ejemplo : "";
+    $("ayudaNumero").textContent = (k === "cedula" ? "Solo el número, sin complemento. " : "") + "Se guarda cifrado; solo se muestran los últimos 4 dígitos.";
     $("camposExtra").innerHTML = t ? t.extras.map(x => x.opts
         ? `<div class="campo"><label for="det_${x.k}">${esc(x.label)}</label><select id="det_${x.k}" name="det_${x.k}" ${x.req ? "required" : ""}><option value="">Seleccionar</option>${x.opts.map(o => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select></div>`
         : `<div class="campo"><label for="det_${x.k}">${esc(x.label)}</label><input type="text" id="det_${x.k}" name="det_${x.k}" maxlength="60" value="${esc(x.def || "")}" ${x.req ? "required" : ""}></div>`).join("") : "";
@@ -590,13 +638,24 @@ function pintarVistaPrevia() {
     });
 }
 
+function validarReporte() {
+    const f = $("formReportar"), k = tipoSeleccionado();
+    const nac = f.elements.FechaNacimiento, hal = f.elements.FechaHallazgo;
+    fijarError(f.elements.NombreCompleto, errorNombre(f.elements.NombreCompleto.value));
+    fijarError(f.elements.NumeroCompleto, errorNumero(f.elements.NumeroCompleto.value, k));
+    fijarError(nac, errorNacimiento(nac.value));
+    // el hallazgo nunca puede ser anterior al nacimiento del titular
+    hal.min = nac.value && !errorNacimiento(nac.value) && nac.value > FECHA_MIN_HALLAZGO ? nac.value : FECHA_MIN_HALLAZGO;
+    fijarError(hal, errorHallazgo(hal.value, errorNacimiento(nac.value) ? "" : nac.value, k));
+}
+
 function configurarReporte() {
     const f = $("formReportar");
     pintarTipos();
     f.elements.FechaHallazgo.max = hoyISO();
     f.elements.FechaNacimiento.max = hoyISO();
-    f.addEventListener("change", e => { if (e.target.name === "TipoDocumento") pintarExtras(); pintarVistaPrevia(); });
-    f.addEventListener("input", pintarVistaPrevia);
+    f.addEventListener("change", e => { if (e.target.name === "TipoDocumento") pintarExtras(); validarReporte(); pintarVistaPrevia(); });
+    f.addEventListener("input", () => { validarReporte(); pintarVistaPrevia(); });
     pintarVistaPrevia();
 
     conectarFormulario("formReportar", "mensajeRegistro", async form => {
@@ -604,15 +663,30 @@ function configurarReporte() {
         const detalles = {};
         Object.keys(datos).forEach(k => { if (k.startsWith("det_")) { detalles[k.slice(4)] = datos[k]; delete datos[k]; } });
         datos.Detalles = detalles;
-        if (fotoLista) { datos.imagenBase64 = fotoLista.base64; datos.imagenTipo = "image/jpeg"; }
+        datos.imagenBase64 = fotoLista.base64;
+        datos.imagenTipo = "image/jpeg";
         const res = await llamarAPI("agregarDocumento", datos, true);
         form.reset();
         limpiarFoto();
         pintarExtras();
+        validarReporte();
         pintarVistaPrevia();
         setMensaje("mensajeRegistro", `Documento registrado correctamente (${res.IDDocumento}). Gracias por ayudar a devolverlo.`, "ok");
         toast("Documento registrado. ¡Gracias!");
         await actualizarDatos();
+    }, {
+        antes: validarReporte,
+        despues: () => {
+            // la fotografía del documento es obligatoria
+            const hay = Boolean(fotoLista);
+            $("errorFoto").hidden = hay;
+            $("dropzone").classList.toggle("invalida", !hay);
+            if (!hay) {
+                $("dropzone").scrollIntoView({ block: "center", behavior: sinMovimiento ? "auto" : "smooth" });
+                $("imagenDocumento").focus({ preventScroll: true });
+            }
+            return hay;
+        }
     });
 }
 
@@ -735,9 +809,19 @@ function mostrarEntrega(p) {
     if (!dlg.open) dlg.showModal();
 }
 
+function validarReclamo() {
+    const f = $("formReclamo");
+    const d = documentos.find(x => x.IDDocumento === f.elements.IDDocumento.value);
+    fijarError(f.elements.NombreCompleto, errorNombre(f.elements.NombreCompleto.value));
+    fijarError(f.elements.NumeroCompleto, errorNumero(f.elements.NumeroCompleto.value, d ? claveTipo(d.TipoDocumento) : ""));
+    fijarError(f.elements.FechaNacimiento, errorNacimiento(f.elements.FechaNacimiento.value));
+}
+
 function configurarReclamo() {
-    $("documentoReclamo").addEventListener("change", resumenReclamo);
-    $("nacimientoVerificacion").max = hoyISO();
+    const f = $("formReclamo");
+    f.elements.FechaNacimiento.max = hoyISO();
+    $("documentoReclamo").addEventListener("change", () => { resumenReclamo(); validarReclamo(); });
+    f.addEventListener("input", validarReclamo);
     $("actualizarReclamos").addEventListener("click", async () => {
         const b = $("actualizarReclamos");
         b.disabled = true;
@@ -754,10 +838,10 @@ function configurarReclamo() {
             cargarVerificados();
         } else {
             setMensaje("mensajeReclamo", res.restantes > 0
-                ? `Los datos no coinciden. Te quedan ${res.restantes} ${res.restantes === 1 ? "intento" : "intentos"} para este documento.`
+                ? `Los datos no coinciden con el documento. Te quedan ${res.restantes} ${res.restantes === 1 ? "intento" : "intentos"}.`
                 : "Los datos no coinciden y agotaste tus intentos para este documento.", "error");
         }
-    });
+    }, { antes: validarReclamo });
 }
 
 /* ---------- Guía ---------- */
@@ -765,8 +849,8 @@ function pintarTablaGuia() {
     $("tablaTipos").innerHTML = Object.values(TIPOS).map(t => `
         <tr>
             <td>${icono(t.icono)}${esc(t.valor)}</td>
-            <td>${esc(t.numero)}${t.extras.map(x => ", " + esc(x.label.toLowerCase().replace(/^¿|\?$/g, ""))).join("")}</td>
-            <td>Nombre abreviado, últimos 4 dígitos, zona${t.extras.map(x => ", " + esc(x.publico)).join("")}</td>
+            <td data-etq="Se solicita">${esc(t.numero)}${t.extras.map(x => ", " + esc(x.label.toLowerCase().replace(/^¿|\?$/g, ""))).join("")}</td>
+            <td data-etq="Se muestra públicamente">Nombre abreviado, últimos 4 dígitos, zona${t.extras.map(x => ", " + esc(x.publico)).join("")}</td>
         </tr>`).join("");
 }
 
